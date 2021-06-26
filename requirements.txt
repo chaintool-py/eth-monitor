@@ -1,0 +1,4 @@
+chainlib>=0.0.4a1,<=0.0.4
+chainsyncer>=0.0.3a1, <=0.0.3
+crypto-dev-signer>=0.4.14a6,<0.5
+eth_erc20~=0.0.10a1
