@@ -21,9 +21,12 @@ from chainsyncer.filter import NoopFilter
 
 # local imports
 from eth_monitor.chain import EthChainInterface
+from eth_monitor.filters.cache import CacheFilter
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
+#logging.getLogger('leveldir.hex').setLevel(level=logging.DEBUG)
+#logging.getLogger('leveldir.numeric').setLevel(level=logging.DEBUG)
 
 default_eth_provider = os.environ.get('RPC_PROVIDER')
 if default_eth_provider == None:
@@ -83,6 +86,14 @@ if __name__ == '__main__':
 
     syncer_backends = FileBackend.resume(chain_spec, block_offset, base_dir=state_dir)
 
+    import tempfile
+    tmp_dir = tempfile.mkdtemp()
+    logg.info('using dir {}'.format(tmp_dir))
+    cache_filter = CacheFilter(chain_spec, tmp_dir)
+    filters = [
+            cache_filter, 
+            ]
+
     if len(syncer_backends) == 0:
         initial_block_start = block_offset - 1
         if config.get('_SYNC_OFFSET') != None:
@@ -99,14 +110,11 @@ if __name__ == '__main__':
    
     chain_interface = EthChainInterface()
     for syncer_backend in syncer_backends:
-        syncers.append(HistorySyncer(syncer_backend, chain_interface))
+        syncers.append(HistorySyncer(syncer_backend, chain_interface, block_callback=cache_filter.block_callback))
 
-    #syncer_backend = FileBackend.live(chain_spec, block_offset+1, base_dir=state_dir)
-    #syncers.append(HeadSyncer(syncer_backend, chain_interface))
-
-    filters = [
-            NoopFilter(),
-            ]
+    syncer_backend = FileBackend.live(chain_spec, block_offset+1, base_dir=state_dir)
+    syncers.append(HeadSyncer(syncer_backend, chain_interface, block_callback=cache_filter.block_callback))
+   
     i = 0
     for syncer in syncers:
         logg.debug('running syncer index {} {}'.format(i, str(syncer)))
@@ -117,9 +125,3 @@ if __name__ == '__main__':
         sys.stderr.write("sync {} done at block {}\n".format(syncer, r))
 
         i += 1
-
-
-#    if len(sys.argv) > 1:
-#        block_number = offset
-#        sys.stderr.write('starting on block {}\n'.format(block_number))
-#        backend.set(block_number, 0)
