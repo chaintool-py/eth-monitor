@@ -1,5 +1,6 @@
-chainlib>=0.0.4a1,<=0.0.4
-chainsyncer>=0.0.3a1, <=0.0.3
-crypto-dev-signer>=0.4.14a6,<0.5
-eth_erc20~=0.0.10a1
-leveldir~=0.0.2
+chainlib-eth~=0.0.19
+chainsyncer>=0.0.7a1, <=0.0.8
+chainsyncer~=0.0.7
+#funga-eth>=0.5.1a1,<0.6.0
+eth-erc20~=0.1.6
+leveldir~=0.1.0
