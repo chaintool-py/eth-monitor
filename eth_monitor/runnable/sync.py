@@ -48,6 +48,7 @@ argparser.add_argument('--skip-history', action='store_true', dest='skip_history
 argparser.add_argument('--includes-file', type=str, dest='includes_file', help='Load include rules from file')
 argparser.add_argument('--include-default', action='store_true', help='Include all transactions by default')
 argparser.add_argument('--excludes-file', type=str, dest='excludes_file', help='Load exclude rules from file')
+argparser.add_argument('-f', '--filter', type=str, action='append', help='Add python module filter path')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
 argparser.add_argument('--single', action='store_true', help='Execute a single sync, regardless of previous states')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
@@ -171,7 +172,7 @@ def setup_backend_resume(chain_spec, block_offset, state_dir, callback, sync_off
             logg.info('resuming sync session {}'.format(syncer_backend))
    
     for syncer_backend in syncer_backends:
-        syncers.append(HistorySyncer(syncer_backend, chain_interface, block_callback=cache_filter.block_callback))
+        syncers.append(HistorySyncer(syncer_backend, chain_interface, block_callback=RuledFilter.block_callback))
 
     syncer_backend = FileBackend.live(chain_spec, block_offset+1, base_dir=state_dir)
     syncers.append(HeadSyncer(syncer_backend, chain_interface, block_callback=cache_filter.block_callback))
@@ -210,6 +211,13 @@ if __name__ == '__main__':
             cache_filter, 
             ]
 
+    if args.filter != None:
+        import importlib
+        for fltr in args.filter:
+            m = importlib.import_module(fltr)
+            fltr_object = m.Filter(rules_filter=address_rules)
+            filters.append(fltr_object)
+        
     syncer_setup_func = None
     if config.true('_SINGLE'):
         syncer_setup_func = setup_backend_single

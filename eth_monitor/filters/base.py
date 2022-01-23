@@ -6,6 +6,7 @@ import logging
 from chainsyncer.backend.file import chain_dir_for
 from leveldir.numeric import NumDir
 from leveldir.hex import HexDir
+from hexathon import strip_0x
 
 logg = logging.getLogger(__name__)
 
@@ -43,6 +44,14 @@ class RuledFilter:
         RuledFilter.block_hash_dir = HexDir(RuledFilter.block_hash_path, 32, levels=2)
         RuledFilter.tx_path = os.path.join(RuledFilter.cache_dir, 'tx')
         RuledFilter.tx_dir = HexDir(RuledFilter.tx_path, 32, levels=2)
+
+
+    @classmethod
+    def block_callback(cls, block, extra=None):
+        src = str(block.src()).encode('utf-8')
+        hash_bytes = bytes.fromhex(strip_0x(block.hash))
+        cls.block_hash_dir.add(hash_bytes, src)
+        cls.block_num_dir.add(block.number, hash_bytes)
 
 
     def filter(self, conn, block, tx, db_session=None):
