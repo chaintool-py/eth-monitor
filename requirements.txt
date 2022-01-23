@@ -1,6 +1,5 @@
-chainlib-eth~=0.0.19
+chainlib-eth~=0.0.22
 chainsyncer>=0.0.7a1, <=0.0.8
 chainsyncer~=0.0.7
-#funga-eth>=0.5.1a1,<0.6.0
 eth-erc20~=0.1.6
 leveldir~=0.1.0

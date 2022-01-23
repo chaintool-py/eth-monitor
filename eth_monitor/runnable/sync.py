@@ -21,7 +21,7 @@ from chainsyncer.filter import NoopFilter
 
 # local imports
 from eth_monitor.chain import EthChainInterface
-from eth_monitor.filters.cache import CacheFilter
+from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.rules import AddressRules
 from eth_monitor.filters import RuledFilter
 
