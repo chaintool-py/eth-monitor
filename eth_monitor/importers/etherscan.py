@@ -24,10 +24,10 @@ class EtherscanImporter:
 
 
     def get(self, address):
-        #f = open('sample_import.json', 'r')
-        #o = json.load(f)
-        #f.close()
-        o = self.get_api(address)
+        f = open('sample_import.json', 'r')
+        o = json.load(f)
+        f.close()
+        #o = self.get_api(address)
 
         for v in o['result']:
             o = block_by_hash(v['blockHash'])

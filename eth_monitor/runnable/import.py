@@ -12,6 +12,7 @@ from chainlib.chain import ChainSpec
 # local imports
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.filters import RuledFilter
+from eth_monitor.store.file import FileStore
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -21,6 +22,7 @@ normalize_address = TxHexNormalizer().wallet_address
 argparser = argparse.ArgumentParser('master eth events monitor')
 argparser.add_argument('--api-key-file', dest='api_key_file', type=str, help='File to read API key from')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
+argparser.add_argument('--include-data', dest='include_data', action='store_true', help='Include data objects')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-f', '--address-file', dest='address_file', default=[], type=str, action='append', help='Add addresses from file')
 argparser.add_argument('-a', '--address', default=[], type=str, action='append', help='Add address')
@@ -80,12 +82,14 @@ def collect_addresses(addresses=[], address_files=[]):
 
 
 def setup_filter(chain_spec, cache_dir):
+    store = FileStore(chain_spec, cache_dir)
     cache_dir = os.path.realpath(cache_dir)
     if cache_dir == None:
         import tempfile
         cache_dir = tempfile.mkdtemp()
     logg.info('using chain spec {} and dir {}'.format(chain_spec, cache_dir))
-    RuledFilter.init(chain_spec, cache_dir)
+    include_data = bool(args.include_data)
+    RuledFilter.init(store, include_tx_data=include_data, include_block_data=include_data)
 
 
 def main():
@@ -93,7 +97,7 @@ def main():
     addresses = collect_addresses(args.address, args.address_file)
 
     from eth_monitor.importers.etherscan import EtherscanImporter
-   
+  
     setup_filter(chain_spec, args.cache_dir)
     filters = [CacheFilter()]
     importer = EtherscanImporter(rpc, api_key, filters=filters, block_callback=RuledFilter.block_callback)
