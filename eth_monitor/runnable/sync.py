@@ -23,6 +23,7 @@ from chainsyncer.filter import NoopFilter
 from eth_monitor.chain import EthChainInterface
 from eth_monitor.filters.cache import CacheFilter
 from eth_monitor.rules import AddressRules
+from eth_monitor.filters import RuledFilter
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -139,15 +140,17 @@ def setup_address_rules(includes_file=None, excludes_file=None, include_default=
     return rules
 
 
-def setup_cache_filter(chain_spec, cache_dir, rules_filter=None):
+def setup_filter(chain_spec, cache_dir):
     cache_dir = os.path.realpath(cache_dir)
     if cache_dir == None:
         import tempfile
         cache_dir = tempfile.mkdtemp()
-    logg.info('using dir {}'.format(cache_dir))
-    cache_filter = CacheFilter(chain_spec, cache_dir, rules_filter=rules_filter)
+    logg.info('using chain spec {} and dir {}'.format(chain_spec, cache_dir))
+    RuledFilter.init(chain_spec, cache_dir)
 
-    return cache_filter
+
+def setup_cache_filter(rules_filter=None):
+    return CacheFilter(rules_filter=rules_filter)
 
 
 def setup_backend_resume(chain_spec, block_offset, state_dir, callback, sync_offset=0, skip_history=False):
@@ -194,9 +197,12 @@ if __name__ == '__main__':
             include_default=bool(args.include_default),
             )
 
-    cache_filter = setup_cache_filter(
+    setup_filter(
             chain_spec,
             args.cache_dir,
+            )
+
+    cache_filter = setup_cache_filter(
             rules_filter=address_rules,
             )
      
