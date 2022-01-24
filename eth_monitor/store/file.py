@@ -28,8 +28,27 @@ class FileStore:
         if self.address_rules != None:
             for a in tx.outputs + tx.inputs:
                 if self.address_rules.apply_rules_addresses(a, a, tx.hash):
-                    a = bytes.fromhex(strip_0x(a))
+                    a_hex = strip_0x(a).upper()
+                    a = bytes.fromhex(a_hex)
                     self.address_dir.add_dir(tx_hash_dirnormal, a, b'')
+                    dirpath = self.address_dir.to_filepath(a_hex)
+                    fp = os.path.join(dirpath, '.start')
+                    num = tx.block.number
+                    num_compare = 0
+                    try:
+                        f = open(fp, 'rb')
+                        r = f.read(8)
+                        f.close()
+                        num_compare = int.from_bytes(r, 'big')
+                    except FileNotFoundError:
+                        pass
+
+                    if num_compare == 0 or num < num_compare:
+                        logg.debug('recoding new start block {} for {}'.format(num, a))
+                        num_bytes = num.to_bytes(8, 'big')
+                        f = open(fp, 'wb')
+                        f.write(num_bytes)
+                        f.close()
 
         if include_data:
             src = json.dumps(tx.src()).encode('utf-8')
