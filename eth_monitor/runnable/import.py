@@ -3,6 +3,7 @@ import argparse
 import logging
 import sys
 import os
+import time
 
 # external imports
 from chainlib.encode import TxHexNormalizer
@@ -13,19 +14,23 @@ from chainlib.chain import ChainSpec
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.filters import RuledFilter
 from eth_monitor.store.file import FileStore
+from eth_monitor.rules import AddressRules
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
 normalize_address = TxHexNormalizer().wallet_address
 
+
 argparser = argparse.ArgumentParser('master eth events monitor')
 argparser.add_argument('--api-key-file', dest='api_key_file', type=str, help='File to read API key from')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
-argparser.add_argument('--include-data', dest='include_data', action='store_true', help='Include data objects')
+argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
+argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-f', '--address-file', dest='address_file', default=[], type=str, action='append', help='Add addresses from file')
 argparser.add_argument('-a', '--address', default=[], type=str, action='append', help='Add address')
+argparser.add_argument('--delay', type=float, default=0.2, help='Seconds to wait between each retrieval from importer')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
 argparser.add_argument('-p', type=str, help='RPC provider')
@@ -81,15 +86,21 @@ def collect_addresses(addresses=[], address_files=[]):
     return address_collection
 
 
-def setup_filter(chain_spec, cache_dir):
-    store = FileStore(chain_spec, cache_dir)
+def setup_address_rules(addresses):
+    rules = AddressRules()
+    for address in addresses:
+        rules.include(sender=address, recipient=address)
+    return rules
+
+
+def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data, address_rules):
+    store = FileStore(chain_spec, cache_dir, address_rules=address_rules)
     cache_dir = os.path.realpath(cache_dir)
     if cache_dir == None:
         import tempfile
         cache_dir = tempfile.mkdtemp()
     logg.info('using chain spec {} and dir {}'.format(chain_spec, cache_dir))
-    include_data = bool(args.include_data)
-    RuledFilter.init(store, include_tx_data=include_data, include_block_data=include_data)
+    RuledFilter.init(store, include_tx_data=include_tx_data, include_block_data=include_block_data)
 
 
 def main():
@@ -98,11 +109,28 @@ def main():
 
     from eth_monitor.importers.etherscan import EtherscanImporter
   
-    setup_filter(chain_spec, args.cache_dir)
-    filters = [CacheFilter()]
+    address_rules = setup_address_rules(args.address)
+
+    setup_filter(
+            chain_spec,
+            args.cache_dir,
+            bool(args.store_tx_data),
+            bool(args.store_block_data),
+            address_rules,
+            )
+
+    cache_filter = CacheFilter(
+            rules_filter=address_rules,
+            )
+
+    filters = [
+            cache_filter,
+            ]
+
     importer = EtherscanImporter(rpc, api_key, filters=filters, block_callback=RuledFilter.block_callback)
     for a in addresses:
         importer.get(a)
+        time.sleep(args.delay)
 
 
 if __name__ == '__main__':

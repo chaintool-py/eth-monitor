@@ -25,10 +25,12 @@ class FileStore:
         tx_hash_dirnormal = strip_0x(tx.hash).upper()
         tx_hash_bytes = bytes.fromhex(tx_hash_dirnormal)
         self.tx_raw_dir.add(tx_hash_bytes, raw)
-        address = bytes.fromhex(strip_0x(tx.inputs[0]))
-        self.address_dir.add_dir(tx_hash_dirnormal, address, b'')
-        address = bytes.fromhex(strip_0x(tx.outputs[0]))
-        self.address_dir.add_dir(tx_hash_dirnormal, address, b'')
+        if self.address_rules != None:
+            for a in tx.outputs + tx.inputs:
+                if self.address_rules.apply_rules_addresses(a, a, tx.hash):
+                    a = bytes.fromhex(strip_0x(a))
+                    self.address_dir.add_dir(tx_hash_dirnormal, a, b'')
+
         if include_data:
             src = json.dumps(tx.src()).encode('utf-8')
             self.tx_dir.add(bytes.fromhex(strip_0x(tx.hash)), src)
@@ -44,7 +46,7 @@ class FileStore:
             self.block_src_dir.add(hash_bytes, src)
 
 
-    def __init__(self, chain_spec, cache_root=base_dir):
+    def __init__(self, chain_spec, cache_root=base_dir, address_rules=None):
         self.cache_root = os.path.join(
             cache_root,
             'eth_monitor',
@@ -68,3 +70,4 @@ class FileStore:
         self.address_path = os.path.join(self.cache_dir, 'address')
         self.address_dir = HexDir(self.address_path, 20, levels=2)
         self.chain_spec = chain_spec
+        self.address_rules = address_rules

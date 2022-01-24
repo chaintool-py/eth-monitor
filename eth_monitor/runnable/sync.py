@@ -24,6 +24,7 @@ from eth_monitor.chain import EthChainInterface
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.rules import AddressRules
 from eth_monitor.filters import RuledFilter
+from eth_monitor.store.file import FileStore
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -46,7 +47,9 @@ argparser.add_argument('--offset', type=int, default=0, help='Start sync on this
 argparser.add_argument('--seq', action='store_true', help='Use sequential rpc ids')
 argparser.add_argument('--skip-history', action='store_true', dest='skip_history', help='Skip history sync')
 argparser.add_argument('--includes-file', type=str, dest='includes_file', help='Load include rules from file')
-argparser.add_argument('--include-default', action='store_true', help='Include all transactions by default')
+argparser.add_argument('--include-default', dest='include_default', action='store_true', help='Include all transactions by default')
+argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
+argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
 argparser.add_argument('--excludes-file', type=str, dest='excludes_file', help='Load exclude rules from file')
 argparser.add_argument('-f', '--filter', type=str, action='append', help='Add python module filter path')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
@@ -88,7 +91,7 @@ if os.environ.get('RPC_AUTHENTICATION') == 'basic':
 rpc = EthHTTPConnection(args.p)
 
 
-def setup_address_rules(includes_file=None, excludes_file=None, include_default=False):
+def setup_address_rules(includes_file=None, excludes_file=None, include_default=False, include_block_default=False):
 
     rules = AddressRules(include_by_default=include_default)
 
@@ -141,13 +144,14 @@ def setup_address_rules(includes_file=None, excludes_file=None, include_default=
     return rules
 
 
-def setup_filter(chain_spec, cache_dir):
+def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data):
+    store = FileStore(chain_spec, cache_dir)
     cache_dir = os.path.realpath(cache_dir)
     if cache_dir == None:
         import tempfile
         cache_dir = tempfile.mkdtemp()
     logg.info('using chain spec {} and dir {}'.format(chain_spec, cache_dir))
-    RuledFilter.init(chain_spec, cache_dir)
+    RuledFilter.init(store, include_tx_data=include_tx_data, include_block_data=include_block_data)
 
 
 def setup_cache_filter(rules_filter=None):
@@ -201,6 +205,8 @@ if __name__ == '__main__':
     setup_filter(
             chain_spec,
             args.cache_dir,
+            bool(args.store_tx_data),
+            bool(args.store_block_data),
             )
 
     cache_filter = setup_cache_filter(
