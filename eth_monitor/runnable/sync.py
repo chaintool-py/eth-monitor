@@ -145,12 +145,18 @@ def setup_address_rules(includes_file=None, excludes_file=None, include_default=
 
 
 def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data):
-    store = FileStore(chain_spec, cache_dir)
-    cache_dir = os.path.realpath(cache_dir)
+    store = None
     if cache_dir == None:
-        import tempfile
-        cache_dir = tempfile.mkdtemp()
-    logg.info('using chain spec {} and dir {}'.format(chain_spec, cache_dir))
+        logg.warning('no cache dir specified, will discard everything!!')
+        from eth_monitor.store.null import NullStore
+        store = NullStore()
+    else:
+        store = FileStore(chain_spec, cache_dir)
+        cache_dir = os.path.realpath(cache_dir)
+        if cache_dir == None:
+            import tempfile
+            cache_dir = tempfile.mkdtemp()
+    logg.info('using chain spec {} and store {}'.format(chain_spec, store))
     RuledFilter.init(store, include_tx_data=include_tx_data, include_block_data=include_block_data)
 
 

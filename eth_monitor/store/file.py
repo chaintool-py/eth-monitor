@@ -90,3 +90,7 @@ class FileStore:
         self.address_dir = HexDir(self.address_path, 20, levels=2)
         self.chain_spec = chain_spec
         self.address_rules = address_rules
+
+
+    def __str__(self):
+        return 'FileStore: root {}'.format(self.cache_root)

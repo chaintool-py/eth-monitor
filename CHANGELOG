@@ -1,0 +1,6 @@
+- 0.0.3
+	* Add console tx monitor feed
+- 0.0.2
+	* Add import support, with etherscan implementation
+- 0.0.1
+	* Add basic cache sync framework with filesystem backend
