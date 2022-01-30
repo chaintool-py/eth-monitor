@@ -26,6 +26,7 @@ class RuledFilter:
 
     @classmethod
     def block_callback(cls, block, extra=None):
+        logg.info('processing {}'.format(block))
         cls.store.put_block(block, include_data=cls.include_block_data)
 
 
@@ -34,5 +35,5 @@ class RuledFilter:
             if not self.rules_filter.apply_rules(tx):
                 logg.debug('rule match failed for tx {}'.format(tx.hash))
                 return
-        logg.info('applying filter {}'.format(self))
+        logg.debug('applying filter {}'.format(self))
         self.ruled_filter(conn, block, tx, db_session=db_session)
