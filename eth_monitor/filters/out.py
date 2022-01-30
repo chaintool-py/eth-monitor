@@ -22,14 +22,13 @@ class OutFilter(RuledFilter):
         self.renderers = renderers
         self.c = 0
         self.chain_spec = chain_spec
-        self.chain_spec_str = str(chain_spec)
 
 
     def filter(self, conn, block, tx, db_session=None):
         s = None
     
         for renderer in self.renderers:
-            s = renderer.apply(self.c, s, self.chain_spec_str, conn, block, tx)
+            s = renderer.apply(self.c, s, self.chain_spec, conn, block, tx)
             if s != None:
                 break
 
