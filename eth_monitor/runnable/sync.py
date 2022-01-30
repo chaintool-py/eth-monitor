@@ -280,9 +280,8 @@ def main():
                 skip_history=config.true('_NO_HISTORY'),
                 )
 
-    renderers = ['local.ge']
     renderers_mods = []
-    for renderer in renderers:
+    for renderer in args.renderer:
         m = importlib.import_module(renderer)
         renderers_mods.append(m)
 
