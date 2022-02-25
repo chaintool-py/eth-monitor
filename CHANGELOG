@@ -1,3 +1,5 @@
+- 0.0.7
+	* Remove forced execution with renderers
 - 0.0.6
 	* Pass chain spec instead of chain str to output renderers
 - 0.0.5
