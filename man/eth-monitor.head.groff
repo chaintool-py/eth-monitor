@@ -4,21 +4,31 @@
 eth-monitor \- Cache, index and monitor transactions with an EVM node rpc
 
 .SH SYNOPSIS
-.P
-\fBeth-monitor\fP [ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --includes-file \fIfile\fP ] 
-.P
-\fBeth-monitor\fP [ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --excludes-file \fIfile\fP ] [ --include-default ] 
+.SY eth-monitor
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --includes-file \fIfile\fP ] 
+.YS
+.SY eth-monitor
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --excludes-file \fIfile\fP ] [ --include-default ] 
+.YS
 
 
 .SH DESCRIPTION
 .P
+The \fBeth-monitor\fP has fulfills three distinct but related functions:
+.IP
+1. A customizable view of on transactions of interest.
+.IP
+2. A block and transaction cache.
+.IP
+3. Arbitrary code executions using a transaction (and its block) as input.
+
+.P
 Using an EVM RPC endpoint, the \fBeth-monitor\fP tool will retrieve blocks within a given range and provides arbitrary processing of each transaction. Sync behavior is controlled using the \fB--offset\fP, \fB--until\fP and \fB--head\fP options. \fBSee EXAMPLES\fP on sync example usage.
 .P
-Processing is done by python modules implementing a filter interface, specified by the \fB--filter\fP option. See \fBinfo eth-monitor\fP for information on how to write filters.
+Processing is done by python modules implementing a filter interface. Filter modules are specified by the \fB--filter\fP option, which can be defined multiple times. See \fBDEFINING FILTERS\fP for details.
 .P
-Each chain spec persists its own sync state. E.g. if a historical sync between blocks 100 and 200 was executed against chain \fIevm:foo:42:bar\fP and halted at block 150, then next execution will resume at this block height. The state of which filters were executed for the last transaction processed is also kept. See \fBSYNCING\fP below for more details.
+Each chain spec persists its own sync state. E.g. if a historical sync between blocks 100 and 200 was executed against chain \fIevm:foo:42:bar\fP and halted at block 150, then next execution will resume at this block height. The state of which filters were executed for the last transaction processed is also kept. The \fB--single\fP option can be used to override this behavior. See \fBSYNCING\fP below for more details.
 .P
-Syncs can be forced to (re)run for ranges regardless of previous state by using the \fB--single\fP option. However, there is no protection in place from preventing code filters from being executed again on the same transaction when this is done.
 .P
 By default, no transactions are matched, and input and output addresses to match against transactions need to be explicitly specified. This behavior can be reversed with the \fB--include-default\fP option. Addresses to match are defined using the \fB--input\fP and \fB--output\fP options, and/or by file using the \fB--includes-file\fP and \fB--excludes-file\fP options. Addresses specified multiple times will be deduplicated.
 .P

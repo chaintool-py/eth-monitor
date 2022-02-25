@@ -1,0 +1,27 @@
+.SH DEFINING FILTERS
+
+A python module used for filter must fulfill two conditions:
+
+.IP
+1. It must provide a class named \fIFilter\fP in the package base namespace.
+.IP
+2. The \fIFilter\fP class must include a method named \fIfilter\fP with the signature \fIdef filter(self, conn, block, tx, db_session=None)\fP. 
+
+Filters will strictly be executed in the order which they are defined on the command line.
+
+
+.SH SYNCING
+When a sync is initiated, the state of this sync is persisted. This way, previous syncs that did not complete for some reason will be resumed where they left off.
+.P
+A special sync type \fB--head\fP starts syncing at the current head of the chain, and continue to sync until interrupted. When resuming sync, a new sync range between the current block head and the block height at which the previous \fB--head\fP sync left off will automatically be created.
+.P
+Syncs can be forced to (re)run for ranges regardless of previous state by using the \fB--single\fP option. However, there is no protection in place from preventing code filters from being executed again on the same transaction when this is done.
+
+
+.SH RENDERING
+
+
+
+.SH FURTHER READING
+
+Refer to the \fBchainsyncer\fP chapter n \fIinfo chaintool\fP for in-depth information on the subjects of syncing and filtering.
