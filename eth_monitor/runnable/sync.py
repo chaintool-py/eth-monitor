@@ -358,15 +358,18 @@ def main():
 
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
     filters.append(out_filter)
-
-    cache_rpc = CacheRPC(rpc, store)
+    
+    use_rpc = rpc
+    if not args.fresh:
+        use_rpc = CacheRPC(rpc, store)
+    
     i = 0
     for syncer in syncers:
         logg.info('running syncer index {} {}'.format(i, str(syncer)))
         for f in filters:
             syncer.add_filter(f)
 
-        r = syncer.loop(int(config.get('SYNCER_LOOP_INTERVAL')), cache_rpc)
+        r = syncer.loop(int(config.get('SYNCER_LOOP_INTERVAL')), use_rpc)
         sys.stderr.write("sync {} done at block {}\n".format(syncer, r))
 
         i += 1
