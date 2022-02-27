@@ -23,16 +23,12 @@ The \fBeth-monitor\fP has fulfills three distinct but related functions:
 3. Arbitrary code executions using a transaction (and its block) as input.
 
 .P
-Using an EVM RPC endpoint, the \fBeth-monitor\fP tool will retrieve blocks within a given range and provides arbitrary processing of each transaction. Sync behavior is controlled using the \fB--offset\fP, \fB--until\fP and \fB--head\fP options. \fBSee EXAMPLES\fP on sync example usage.
+Using an EVM RPC endpoint, the \fBeth-monitor\fP tool will retrieve blocks within a given range and provides arbitrary processing of each transaction.
 .P
-Processing is done by python modules implementing a filter interface. Filter modules are specified by the \fB--filter\fP option, which can be defined multiple times. See \fBDEFINING FILTERS\fP for details.
+A collection of options is provided to control the behavior of which block ranges to sync, which criteria to use for display and cache, and what code to execute for matching transactions. Details on each topic can be found in the \fBSYNCING\fP, \fBMATCHING ADDRESSES\fP and \fBDEFINING FILTERS\fP sections below, respectively.
 .P
-Each chain spec persists its own sync state. E.g. if a historical sync between blocks 100 and 200 was executed against chain \fIevm:foo:42:bar\fP and halted at block 150, then next execution will resume at this block height. The state of which filters were executed for the last transaction processed is also kept. The \fB--single\fP option can be used to override this behavior. See \fBSYNCING\fP below for more details.
+Example executions of the tool can be found in the \fBEXAMPLES\fP section.
 .P
-.P
-By default, no transactions are matched, and input and output addresses to match against transactions need to be explicitly specified. This behavior can be reversed with the \fB--include-default\fP option. Addresses to match are defined using the \fB--input\fP and \fB--output\fP options, and/or by file using the \fB--includes-file\fP and \fB--excludes-file\fP options. Addresses specified multiple times will be deduplicated.
-.P
-Every transaction matched will cause the a copy of that transaction and its block to be stored to the cache. In some cases, it may be desirable to store all blocks and/or transactions, and only use address matches for display and/or filters. \fB--store-tx-data\fP and \fB--store-block-data\fP provides this function.
 
 
 .SS OPTIONS

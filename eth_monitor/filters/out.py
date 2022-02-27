@@ -25,6 +25,10 @@ class OutFilter(RuledFilter):
 
 
     def filter(self, conn, block, tx, db_session=None):
+        r = super(OutFilter, self).filter(conn, block, tx, db_session=db_session)
+        if r == False:
+            return True
+
         s = None
     
         for renderer in self.renderers:

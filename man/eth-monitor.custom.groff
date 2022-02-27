@@ -1,3 +1,27 @@
+.SH MATCHING ADDRESSES
+By default, addresses to match against transactions need to be explicitly specified. This behavior can be reversed with the \fB--include-default\fP option. Addresses to match are defined using the \fB--input\fP, \fB--output\fP and \fB--exec\fP options. Addresses specified multiple times will be deduplicated.
+.P
+Inclusion rules may also be loaded from file by specifying the \fB--includes-file\fP and \fB--excludes-file\fP options. Each file must specify the outputs, inputs and exec addresses as comma separated lists respectively, separated by tabs.
+
+
+.SH SYNCING
+When a sync is initiated, the state of this sync is persisted. This way, previous syncs that did not complete for some reason will be resumed where they left off.
+.P
+A special sync type \fB--head\fP starts syncing at the current head of the chain, and continue to sync until interrupted. When resuming sync, a new sync range between the current block head and the block height at which the previous \fB--head\fP sync left off will automatically be created.
+.P
+Syncs can be forced to (re)run for ranges regardless of previous state by using the \fB--single\fP option. However, there is no protection in place from preventing code filters from being executed again on the same transaction when this is done. See \fBDEFINING FILTERS\fP below.
+
+
+.SH CACHE
+.P
+When syncing, the hash of a block and transaction matching the address criteria will be stored in the cache. The hashes can be used for future data lookups.
+.P
+If \fB--store-block-data\fP and/or \fB--store-tx-data\fP is set, a copy of the block and/or transaction data will also be stored, respectively.
+
+
+.SH RENDERING
+
+
 .SH DEFINING FILTERS
 
 A python module used for filter must fulfill two conditions:
@@ -8,18 +32,6 @@ A python module used for filter must fulfill two conditions:
 2. The \fIFilter\fP class must include a method named \fIfilter\fP with the signature \fIdef filter(self, conn, block, tx, db_session=None)\fP. 
 
 Filters will strictly be executed in the order which they are defined on the command line.
-
-
-.SH SYNCING
-When a sync is initiated, the state of this sync is persisted. This way, previous syncs that did not complete for some reason will be resumed where they left off.
-.P
-A special sync type \fB--head\fP starts syncing at the current head of the chain, and continue to sync until interrupted. When resuming sync, a new sync range between the current block head and the block height at which the previous \fB--head\fP sync left off will automatically be created.
-.P
-Syncs can be forced to (re)run for ranges regardless of previous state by using the \fB--single\fP option. However, there is no protection in place from preventing code filters from being executed again on the same transaction when this is done.
-
-
-.SH RENDERING
-
 
 
 .SH FURTHER READING

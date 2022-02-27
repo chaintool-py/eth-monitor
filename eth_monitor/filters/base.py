@@ -34,6 +34,5 @@ class RuledFilter:
         if self.rules_filter != None:
             if not self.rules_filter.apply_rules(tx):
                 logg.debug('rule match failed for tx {}'.format(tx.hash))
-                return
-        logg.debug('applying filter {}'.format(self))
-        self.ruled_filter(conn, block, tx, db_session=db_session)
+                return False
+        return True

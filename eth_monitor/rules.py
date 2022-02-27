@@ -1,10 +1,45 @@
 # standard imports
 import logging
+import uuid
 
 # external imports
 from chainlib.eth.address import is_same_address
 
 logg = logging.getLogger()
+
+
+class RuleSimple:
+
+    def __init__(self, outputs, inputs, executables, description=None):
+        self.description = description
+        if self.description == None:
+            self.description = str(uuid.uuid4())
+        self.outputs = outputs
+        self.inputs = inputs
+        self.executables = executables
+
+
+    def check(self, sender, recipient, tx_hash):
+        for rule in self.outputs:
+            if rule != None and is_same_address(sender, rule):
+                logg.debug('tx {} rule INCLUDE match in SENDER {}'.format(tx_hash, sender))
+                return True
+        for rule in self.inputs:
+            if rule != None and is_same_address(recipient, rule):
+                logg.debug('tx {} rule INCLUDE match in RECIPIENT {}'.format(tx_hash, recipient))
+                return True
+        for rule in self.executables:
+            if rule != None and is_same_address(recipient, rule):
+                logg.debug('tx {} rule INCLUDE match in ExECUTABLE {}'.format(tx_hash, recipient))
+                return True
+
+
+    def __str__(self):
+        return 'Simple ' + self.description + ' outputs {} inputs {} execs {}'.format(
+                self.outputs,
+                self.inputs,
+                self.executables,
+                )
 
 
 class AddressRules:
@@ -15,14 +50,14 @@ class AddressRules:
         self.include_by_default = include_by_default
 
 
-    def exclude(self, sender=None, recipient=None, executable=None):
-        self.excludes.append((sender, recipient, executable,))
-        logg.info('cache filter added EXCLUDE rule sender {} recipient {} executable {}'.format(sender, recipient, executable))
+    def exclude(self, rule):
+        self.excludes.append(rule)
+        logg.info('cache filter added EXCLUDE rule {}'.format(rule))
 
-
-    def include(self, sender=None, recipient=None, executable=None):
-        self.includes.append((sender, recipient, executable,))
-        logg.info('cache filter added INCLUDE rule sender {} recipient {} executable {}'.format(sender, recipient, executable))
+    
+    def include(self, rule):
+        self.includes.append(rule)
+        logg.info('cache filter added EXCLUDE rule {}'.format(rule))
 
 
     def apply_rules(self, tx):
@@ -33,23 +68,15 @@ class AddressRules:
         v = self.include_by_default
 
         for rule in self.includes:
-            if rule[0] != None and is_same_address(sender, rule[0]):
-                logg.debug('tx {} rule INCLUDE match in SENDER {}'.format(tx_hash, sender))
+            if rule.check(sender, recipient, tx_hash):
                 v = True
-            elif rule[1] != None and is_same_address(recipient, rule[1]):
-                logg.debug('tx {} rule INCLUDE match in RECIPIENT {}'.format(tx_hash, recipient))
-                v = True
-            elif rule[2] != None and is_same_address(recipient, rule[2]):
-                logg.debug('tx {} rule INCLUDE match in ExECUTABLE {}'.format(tx_hash, recipient))
-                v = True
+                logg.info('match in includes rule: {}'.format(rule))
+                break
+
         for rule in self.excludes:
-            if rule[0] != None and is_same_address(sender, rule[0]):
-                logg.debug('tx {} rule INCLUDE match in SENDER {}'.format(tx_hash, sender))
+            if rule.check(sender, recipient, tx_hash):
                 v = False
-            elif rule[1] != None and is_same_address(recipient, rule[1]):
-                logg.debug('tx {} rule INCLUDE match in ExECUTABLE {}'.format(tx_hash, recipient))
-                v = False
-            elif rule[2] != None and is_same_address(recipient, rule[2]):
-                logg.debug('tx {} rule INCLUDE match in ExECUTABLE {}'.format(tx_hash, recipient))
-                v = False
+                logg.info('match in excludes rule: {}'.format(rule))
+                break
+
         return v

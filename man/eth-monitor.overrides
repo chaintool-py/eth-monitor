@@ -1,0 +1,13 @@
+input	Add an address of interest to inputs (recipients) array. Complements \fB--address-file\fP.	--input	address
+output	Add an address of interest to outputs (sender) array. Complements \fB--address-file\fP.	--output	address
+exec	Add an address of interest to executable address array. Complements \fB--address-file\fP.	--exec	address
+address	Add an address of interest to match any role. Complements \fB--address-file\fP.	--address	address
+xinput	Add an address of disinterest to inputs (recipients) array.	--x-input	address
+xoutput	Add an address of disinterest to outputs (sender) array.	--x-output	address
+xexec	Add an address of disinterest to executable address array.	--x-exec	address
+xaddress	Add an address of interest to match any role.	--x-address	address
+includedefault	Match all addresses by default. Addresses may be excluded using --excludes-file. If this is set, --input, --output, --exec and --includes-file will have no effect.	--include-default	
+includesfile	Load address include matching rules from file. See \fBMATCHING ADDRESSES\fP.	--includes-file	file
+excludesfile	Load address exclude matching rules from file. See \fBMATCHING ADDRESSES\fP.	--excludes-file	file
+storetx	Store transaction data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-tx-data	
+storeblock	Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-block-data	

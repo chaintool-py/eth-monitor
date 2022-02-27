@@ -23,15 +23,16 @@ from chainsyncer.filter import NoopFilter
 # local imports
 from eth_monitor.chain import EthChainInterface
 from eth_monitor.filters.cache import Filter as CacheFilter
-from eth_monitor.rules import AddressRules
+from eth_monitor.rules import (
+        AddressRules,
+        RuleSimple,
+        )
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.store.file import FileStore
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
-#logging.getLogger('leveldir.hex').setLevel(level=logging.DEBUG)
-#logging.getLogger('leveldir.numeric').setLevel(level=logging.DEBUG)
 
 default_eth_provider = os.environ.get('RPC_PROVIDER')
 if default_eth_provider == None:
@@ -47,27 +48,50 @@ argparser.add_argument('-p', '--provider', dest='p', default=default_eth_provide
 argparser.add_argument('-c', type=str, help='config file')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='Chain specification string')
 argparser.add_argument('--offset', type=int, default=0, help='Start sync on this block')
-#argparser.add_argument('--until', type=int, default=0, help='Start sync on this block')
+argparser.add_argument('--until', type=int, default=0, help='Terminate sync on this block')
 argparser.add_argument('--head', action='store_true', help='Start at current block height (overrides --offset, assumes --keep-alive)')
 argparser.add_argument('--seq', action='store_true', help='Use sequential rpc ids')
 argparser.add_argument('--skip-history', action='store_true', dest='skip_history', help='Skip history sync')
+argparser.add_argument('--keep-alive', action='store_true', dest='keep_alive', help='Continue to sync head after history sync complete')
+argparser.add_argument('--input', default=[], action='append', type=str, help='Add input (recipient) addresses to includes list')
+argparser.add_argument('--output', default=[], action='append', type=str, help='Add output (sender) addresses to includes list')
+argparser.add_argument('--exec', default=[], action='append', type=str, help='Add exec (contract) addresses to includes list')
+argparser.add_argument('--address', default=[], action='append', type=str, help='Add addresses as input, output and exec to includes list')
+argparser.add_argument('--x-input', default=[], action='append', type=str, dest='xinput', help='Add input (recipient) addresses to excludes list')
+argparser.add_argument('--x-output', default=[], action='append', type=str, dest='xoutput', help='Add output (sender) addresses to excludes list')
+argparser.add_argument('--x-exec', default=[], action='append', type=str, dest='xexec', help='Add exec (contract) addresses to excludes list')
+argparser.add_argument('--x-address', default=[], action='append', type=str, dest='xaddress', help='Add addresses as input, output and exec to excludes list')
 argparser.add_argument('--includes-file', type=str, dest='includes_file', help='Load include rules from file')
 argparser.add_argument('--include-default', dest='include_default', action='store_true', help='Include all transactions by default')
 argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
-argparser.add_argument('--excludes-file', type=str, dest='excludes_file', help='Load exclude rules from file')
+argparser.add_argument('--address-file', type=str, dest='excludes_file', help='Load exclude rules from file')
 argparser.add_argument('--renderer', type=str, action='append', default=[], help='Python modules to dynamically load for rendering of transaction output')
 argparser.add_argument('--filter', type=str, action='append', help='Add python module filter path')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
 argparser.add_argument('--single', action='store_true', help='Execute a single sync, regardless of previous states')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
+argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose')
 args = argparser.parse_args(sys.argv[1:])
 
-if args.vv:
+if args.vvv:
     logg.setLevel(logging.DEBUG)
-elif args.v:
-    logg.setLevel(logging.INFO)
+else:
+    logging.getLogger('chainlib.connection').setLevel(logging.WARNING)
+    logging.getLogger('chainlib.eth.tx').setLevel(logging.WARNING)
+    logging.getLogger('chainsyncer.driver.history').setLevel(logging.WARNING)
+    logging.getLogger('chainsyncer.driver.head').setLevel(logging.WARNING)
+    logging.getLogger('chainsyncer.backend.file').setLevel(logging.WARNING)
+    logging.getLogger('chainsyncer.backend.sql').setLevel(logging.WARNING)
+    logging.getLogger('chainsyncer.filter').setLevel(logging.WARNING)
+    logging.getLogger('leveldir.hex').setLevel(level=logging.DEBUG)
+    logging.getLogger('leveldir.numeric').setLevel(level=logging.DEBUG)
+
+    if args.vv:
+        logg.setLevel(logging.DEBUG)
+    elif args.v:
+        logg.setLevel(logging.INFO)
 
 config_dir = args.c
 config = confini.Config(base_config_dir, os.environ.get('CONFINI_ENV_PREFIX'), override_dirs=args.c)
@@ -89,10 +113,10 @@ else:
     block_offset = args.offset
 
 block_limit = 0
-#if args.until > 0:
-#    if not args.head and args.until <= block_offset:
-#        raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(block_offset, args.until))
-#    block_limit = args.until
+if args.until > 0:
+    if not args.head and args.until <= block_offset:
+        raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(block_offset, args.until))
+    block_limit = args.until
 
 logg.debug('config loaded:\n{}'.format(config))
 
@@ -111,9 +135,34 @@ if os.environ.get('RPC_AUTHENTICATION') == 'basic':
 rpc = EthHTTPConnection(args.p)
 
 
-def setup_address_rules(includes_file=None, excludes_file=None, include_default=False, include_block_default=False):
+def setup_address_arg_rules(rules, args):
+    include_inputs = args.input
+    include_outputs = args.output
+    include_exec = args.exec
+    exclude_inputs = args.xinput
+    exclude_outputs = args.xoutput
+    exclude_exec = args.xexec
 
-    rules = AddressRules(include_by_default=include_default)
+    for address in args.address:
+        include_inputs.append(address)
+        include_outputs.append(address)
+        include_exec.append(address)
+
+    for address in args.xaddress:
+        exclude_inputs.append(address)
+        exclude_outputs.append(address)
+        exclude_exec.append(address)
+
+    includes = RuleSimple(include_outputs, include_inputs, include_exec)
+    rules.include(includes)
+
+    excludes = RuleSimple(exclude_outputs, exclude_inputs, exclude_exec)
+    rules.exclude(excludes)
+
+    return rules
+
+
+def setup_address_file_rules(rules, includes_file=None, excludes_file=None, include_default=False, include_block_default=False):
 
     if includes_file != None:
         f = open(includes_file, 'r')
@@ -123,20 +172,32 @@ def setup_address_rules(includes_file=None, excludes_file=None, include_default=
             if r == '':
                 break
             r = r.rstrip()
-            v = r.split(",")
+            v = r.split("\t")
 
-            sender = None
-            recipient = None
-            executable = None
+            sender = []
+            recipient = []
+            executable = []
 
-            if v[0] != '':
-                sender = v[0]
-            if v[1] != '':
-                recipient = v[1]
-            if v[2] != '':
-                executable = v[2]
+            try:
+                if v[0] != '':
+                    sender = v[0].split(',')
+            except IndexError:
+                pass
 
-            rules.include(sender=sender, recipient=recipient, executable=executable)
+            try:
+                if v[1] != '':
+                    recipient = v[1].split(',')
+            except IndexError:
+                pass
+
+            try:
+                if v[2] != '':
+                    executable = v[2].split(',')
+            except IndexError:
+                pass
+
+            rule = RuleSimple(sender, recipient, executable)
+            rules.include(rule)
 
     if excludes_file != None:
         f = open(includes_file, 'r')
@@ -146,20 +207,21 @@ def setup_address_rules(includes_file=None, excludes_file=None, include_default=
             if r == '':
                 break
             r = r.rstrip()
-            v = r.split(",")
+            v = r.split("\t")
 
             sender = None
             recipient = None
             executable = None
 
             if v[0] != '':
-                sender = v[0]
+                sender = v[0].strip(',')
             if v[1] != '':
-                recipient = v[1]
+                recipient = v[1].strip(',')
             if v[2] != '':
-                executable = v[2]
+                executable = v[2].strip(',')
 
-            rules.exclude(sender=sender, recipient=recipient, executable=executable)
+            rule = RuleSimple(sender, recipient, executable)
+            rules.exclude(rule)
 
     return rules
 
@@ -222,6 +284,8 @@ def setup_backend_head(chain_spec, block_offset, block_limit, state_dir, callbac
 
 
 def main():
+    global block_limit
+
     o = block_latest()
     r = rpc.do(o)
     block_offset = int(strip_0x(r), 16) + 1
@@ -229,14 +293,19 @@ def main():
 
     if block_offset == -1:
         block_offset = block_latest
-#    elif not config.true('_KEEP_ALIVE'):
-#        if block_limit == 0:
-#            block_limit = block_latest
-#
-    address_rules = setup_address_rules(
+    elif not config.true('_KEEP_ALIVE'):
+        if block_limit == 0:
+            block_limit = block_latest
+
+    address_rules = AddressRules(include_by_default=args.include_default)
+    address_rules = setup_address_file_rules(
+            address_rules,
             includes_file=args.includes_file,
             excludes_file=args.excludes_file,
-            include_default=bool(args.include_default),
+            )
+    address_rules = setup_address_arg_rules(
+            address_rules,
+            args,
             )
 
     setup_filter(
