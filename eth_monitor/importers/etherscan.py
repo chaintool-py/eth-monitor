@@ -14,7 +14,7 @@ from chainlib.eth.tx import (
         )
 
 
-class EtherscanImporter:
+class Importer:
 
     def __init__(self, rpc, api_key, filters=[], block_callback=None):
         self.api_key = api_key

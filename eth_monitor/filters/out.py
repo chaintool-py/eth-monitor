@@ -14,6 +14,24 @@ def apply_interface(c, s, chain_str, conn, block, tx, db_session=None):
     pass
 
 
+class OutResult:
+
+    def __init__(self):
+        self.content = ''
+
+
+    def set(self, v):
+        self.content = v 
+
+
+    def get(self):
+        return self.content
+
+
+    def __str__(self):
+        return self.content
+
+
 class OutFilter(RuledFilter):
 
     def __init__(self, chain_spec, writer=sys.stdout, renderers=[], rules_filter=None):
@@ -22,6 +40,7 @@ class OutFilter(RuledFilter):
         self.renderers = renderers
         self.c = 0
         self.chain_spec = chain_spec
+        self.result = OutResult()
 
 
     def filter(self, conn, block, tx, db_session=None):
@@ -29,14 +48,14 @@ class OutFilter(RuledFilter):
         if r == False:
             return True
 
-        s = None
-    
         for renderer in self.renderers:
-            s = renderer.apply(self.c, s, self.chain_spec, conn, block, tx)
-            if s != None:
+            r = renderer.apply(self.c, self.result, self.chain_spec, conn, block, tx)
+            if not r:
                 break
 
-        if s == None:
+        s = str(self.result)
+
+        if s == '':
             data = tx.payload
             if len(data) > 8:
                 data = data[:8] + '...'

@@ -54,6 +54,13 @@ class FileStore:
             src = json.dumps(tx.src()).encode('utf-8')
             self.tx_dir.add(bytes.fromhex(strip_0x(tx.hash)), src)
 
+            rcpt_src = tx.rcpt_src()
+            logg.debug('rcpt {}'.format(rcpt_src))
+            if rcpt_src != None:
+                rcpt_src = json.dumps(rcpt_src).encode('utf-8')
+                self.rcpt_dir.add(bytes.fromhex(strip_0x(tx.hash)), rcpt_src)
+
+
 
     def put_block(self, block, include_data=False):
         hash_bytes = bytes.fromhex(strip_0x(block.hash))
@@ -64,6 +71,37 @@ class FileStore:
             src = json.dumps(block.src()).encode('utf-8')
             self.block_src_dir.add(hash_bytes, src)
 
+
+    def get_block_number(self, block_number):
+        fp = self.block_num_dir.to_filepath(block_number)
+        f = open(fp, 'rb')
+        r = f.read()
+        f.close()
+        return self.get_block(r.hex())
+
+
+    def get_block(self, block_hash):
+        fp = self.block_src_dir.to_filepath(block_hash)
+        f = open(fp, 'rb')
+        r = f.read()
+        f.close()
+        return r
+
+
+    def get_tx(self, tx_hash):
+        fp = self.tx_dir.to_filepath(tx_hash)
+        f = open(fp, 'rb')
+        r = f.read()
+        f.close()
+        return r
+
+
+    def get_rcpt(self, tx_hash):
+        fp = self.rcpt_dir.to_filepath(tx_hash)
+        f = open(fp, 'rb')
+        r = f.read()
+        f.close()
+        return r
 
     def __init__(self, chain_spec, cache_root=base_dir, address_rules=None):
         self.cache_root = os.path.join(
@@ -86,6 +124,10 @@ class FileStore:
         self.tx_raw_path = os.path.join(self.cache_dir, 'tx', 'raw')
         self.tx_dir = HexDir(self.tx_path, 32, levels=2)
         self.tx_raw_dir = HexDir(self.tx_raw_path, 32, levels=2)
+        self.rcpt_path = os.path.join(self.cache_dir, 'rcpt', 'src')
+        self.rcpt_raw_path = os.path.join(self.cache_dir, 'rcpt', 'raw')
+        self.rcpt_dir = HexDir(self.rcpt_path, 32, levels=2)
+        self.rcpt_raw_dir = HexDir(self.rcpt_raw_path, 32, levels=2)
         self.address_path = os.path.join(self.cache_dir, 'address')
         self.address_dir = HexDir(self.address_path, 20, levels=2)
         self.chain_spec = chain_spec

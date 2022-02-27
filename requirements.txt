@@ -1,4 +1,4 @@
-chainlib-eth~=0.0.27
+chainlib-eth~=0.0.28
 chainlib~=0.0.23
 chainsyncer~=0.1.0
 eth-erc20~=0.1.10

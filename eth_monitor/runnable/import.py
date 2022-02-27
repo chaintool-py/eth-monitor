@@ -107,7 +107,7 @@ def main():
     conn_socks_tor()
     addresses = collect_addresses(args.address, args.address_file)
 
-    from eth_monitor.importers.etherscan import EtherscanImporter
+    from eth_monitor.importers.etherscan import Importer as EtherscanImporter
   
     address_rules = setup_address_rules(args.address)
 

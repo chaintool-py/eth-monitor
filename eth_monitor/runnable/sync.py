@@ -30,6 +30,7 @@ from eth_monitor.rules import (
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.store.file import FileStore
+from eth_monitor.rpc import CacheRPC
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -69,6 +70,7 @@ argparser.add_argument('--address-file', type=str, dest='excludes_file', help='L
 argparser.add_argument('--renderer', type=str, action='append', default=[], help='Python modules to dynamically load for rendering of transaction output')
 argparser.add_argument('--filter', type=str, action='append', help='Add python module filter path')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
+argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
 argparser.add_argument('--single', action='store_true', help='Execute a single sync, regardless of previous states')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
@@ -85,8 +87,6 @@ else:
     logging.getLogger('chainsyncer.backend.file').setLevel(logging.WARNING)
     logging.getLogger('chainsyncer.backend.sql').setLevel(logging.WARNING)
     logging.getLogger('chainsyncer.filter').setLevel(logging.WARNING)
-    logging.getLogger('leveldir.hex').setLevel(level=logging.DEBUG)
-    logging.getLogger('leveldir.numeric').setLevel(level=logging.DEBUG)
 
     if args.vv:
         logg.setLevel(logging.DEBUG)
@@ -241,6 +241,8 @@ def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data):
     logg.info('using chain spec {} and store {}'.format(chain_spec, store))
     RuledFilter.init(store, include_tx_data=include_tx_data, include_block_data=include_block_data)
 
+    return store
+
 
 def setup_cache_filter(rules_filter=None):
     return CacheFilter(rules_filter=rules_filter)
@@ -308,7 +310,7 @@ def main():
             args,
             )
 
-    setup_filter(
+    store = setup_filter(
             chain_spec,
             args.cache_dir,
             bool(args.store_tx_data),
@@ -357,13 +359,14 @@ def main():
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
     filters.append(out_filter)
 
+    cache_rpc = CacheRPC(rpc, store)
     i = 0
     for syncer in syncers:
         logg.info('running syncer index {} {}'.format(i, str(syncer)))
         for f in filters:
             syncer.add_filter(f)
 
-        r = syncer.loop(int(config.get('SYNCER_LOOP_INTERVAL')), rpc)
+        r = syncer.loop(int(config.get('SYNCER_LOOP_INTERVAL')), cache_rpc)
         sys.stderr.write("sync {} done at block {}\n".format(syncer, r))
 
         i += 1

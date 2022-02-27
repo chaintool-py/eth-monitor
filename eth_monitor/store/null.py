@@ -16,6 +16,22 @@ class NullStore:
         pass
 
 
+    def get_block_number(self, v):
+        raise FileNotFoundError(v)
+
+
+    def get_block(self, v):
+        raise FileNotFoundError(v)
+
+
+    def get_tx(self, v):
+        raise FileNotFoundError(v)
+
+
+    def get_rcpt(self, v):
+        raise FileNotFoundError(v)
+
+
     def __init__(self):
         self.chain_dir = '/dev/null'
 

@@ -2,7 +2,8 @@
 By default, addresses to match against transactions need to be explicitly specified. This behavior can be reversed with the \fB--include-default\fP option. Addresses to match are defined using the \fB--input\fP, \fB--output\fP and \fB--exec\fP options. Addresses specified multiple times will be deduplicated.
 .P
 Inclusion rules may also be loaded from file by specifying the \fB--includes-file\fP and \fB--excludes-file\fP options. Each file must specify the outputs, inputs and exec addresses as comma separated lists respectively, separated by tabs.
-
+.P
+In the current state of this tool, address matching will affect all parts of the processing; cache, code execution and rendering. 
 
 .SH SYNCING
 When a sync is initiated, the state of this sync is persisted. This way, previous syncs that did not complete for some reason will be resumed where they left off.
@@ -13,13 +14,17 @@ Syncs can be forced to (re)run for ranges regardless of previous state by using 
 
 
 .SH CACHE
-.P
 When syncing, the hash of a block and transaction matching the address criteria will be stored in the cache. The hashes can be used for future data lookups.
 .P
 If \fB--store-block-data\fP and/or \fB--store-tx-data\fP is set, a copy of the block and/or transaction data will also be stored, respectively.
 
 
 .SH RENDERING
+Rendering in the context of \fBeth-monitor\fP refers to a formatted output stream that occurs independently of caching and code execution.
+.P
+Filters for rendering may be specified by specifying python modules to the \fB--renderer\fP option. This option may be specified multiple times.
+.P
+Rendering filters will be executed in order, and the first filter to return \fIFalse\fP
 
 
 .SH DEFINING FILTERS
