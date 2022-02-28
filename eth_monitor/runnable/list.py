@@ -82,7 +82,6 @@ if os.environ.get('RPC_AUTHENTICATION') == 'basic':
 rpc = EthHTTPConnection(args.p)
 
 
-
 def main():
     store = FileStore(chain_spec, config.get('_CACHE_DIR'))
     use_rpc = rpc

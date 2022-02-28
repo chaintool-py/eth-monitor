@@ -47,6 +47,7 @@ class AddressIndex:
 
         ks = list(txs.keys())
         ks.sort()
+        ks.reverse()
         for k in ks:
             self.addresses[address].append(txs[k])
         
