@@ -1,3 +1,7 @@
+- 0.1.0
+	* Read blocks, tx, rcpt from cache
+	* Read include and exclude address lists from cli options
+	* Cumulative output rendering
 - 0.0.7
 	* Remove forced execution with renderers
 - 0.0.6

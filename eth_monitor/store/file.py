@@ -103,6 +103,17 @@ class FileStore:
         f.close()
         return r
 
+
+    def get_address_tx(self, address):
+        fp = self.address_dir.to_filepath(address)
+        tx_hashes = []
+        for tx_hash in os.listdir(fp):
+            if tx_hash[0] == '.':
+                continue
+            tx_hashes.append(tx_hash)
+        return tx_hashes
+
+
     def __init__(self, chain_spec, cache_root=base_dir, address_rules=None):
         self.cache_root = os.path.join(
             cache_root,

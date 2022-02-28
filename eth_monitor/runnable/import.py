@@ -14,7 +14,10 @@ from chainlib.chain import ChainSpec
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.filters import RuledFilter
 from eth_monitor.store.file import FileStore
-from eth_monitor.rules import AddressRules
+from eth_monitor.rules import (
+        AddressRules,
+        RuleSimple,
+        )
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -88,8 +91,15 @@ def collect_addresses(addresses=[], address_files=[]):
 
 def setup_address_rules(addresses):
     rules = AddressRules()
+    outputs = []
+    inputs = []
+    execs = []
     for address in addresses:
-        rules.include(sender=address, recipient=address)
+        outputs.append(address)
+        inputs.append(address)
+        execs.append(address)
+    rule = RuleSimple(outputs, inputs, execs, description='etherscan import')
+    rules.include(rule)
     return rules
 
 

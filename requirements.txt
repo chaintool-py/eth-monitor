@@ -1,5 +1,5 @@
-chainlib-eth~=0.0.28
+chainlib-eth>=0.1.0b1,<=0.1.0
 chainlib~=0.0.23
 chainsyncer~=0.1.0
-eth-erc20~=0.1.10
+eth-erc20~=0.1.11
 leveldir~=0.3.0

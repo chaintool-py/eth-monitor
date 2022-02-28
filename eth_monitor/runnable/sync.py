@@ -106,18 +106,6 @@ config.add(args.single, '_SINGLE', True)
 config.add(args.head, '_HEAD', True)
 logg.debug('loaded config:\{}'.format(config))
 
-block_offset = 0
-if args.head:
-    block_offset = -1
-else:
-    block_offset = args.offset
-
-block_limit = 0
-if args.until > 0:
-    if not args.head and args.until <= block_offset:
-        raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(block_offset, args.until))
-    block_limit = args.until
-
 logg.debug('config loaded:\n{}'.format(config))
 
 chain_spec = ChainSpec.from_chain_str(args.i)
@@ -274,7 +262,8 @@ def setup_backend_resume(chain_spec, block_offset, block_limit, state_dir, callb
 
 
 def setup_backend_single(chain_spec, block_offset, block_limit, state_dir, callback, chain_interface, sync_offset=0, skip_history=False):
-    syncer_backend = FileBackend.initial(chain_spec, block_offset, start_block_height=sync_offset, base_dir=state_dir)
+    logg.debug('block limit {}'.format(block_limit))
+    syncer_backend = FileBackend.initial(chain_spec, block_limit, start_block_height=sync_offset, base_dir=state_dir)
     syncer = HistorySyncer(syncer_backend, chain_interface, block_callback=callback)
     return [syncer]
 
@@ -286,18 +275,30 @@ def setup_backend_head(chain_spec, block_offset, block_limit, state_dir, callbac
 
 
 def main():
-    global block_limit
+    session_block_offset = 0
+    if args.head:
+        session_block_offset = -1
+    else:
+        session_block_offset = args.offset
+
+    block_limit = 0
+    if args.until > 0:
+        if not args.head and args.until <= block_offset:
+            raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(block_offset, args.until))
+        block_limit = args.until
+
+
 
     o = block_latest()
     r = rpc.do(o)
     block_offset = int(strip_0x(r), 16) + 1
     logg.info('network block height is {}'.format(block_offset))
 
-    if block_offset == -1:
-        block_offset = block_latest
+    if session_block_offset == -1:
+        session_block_offset = block_offset
     elif not config.true('_KEEP_ALIVE'):
         if block_limit == 0:
-            block_limit = block_latest
+            block_limit = block_offset
 
     address_rules = AddressRules(include_by_default=args.include_default)
     address_rules = setup_address_file_rules(
