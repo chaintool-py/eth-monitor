@@ -17,11 +17,11 @@ from chainlib.eth.tx import (
         receipt,
         Tx,
         )
+from eth_cache.store.file import FileStore
+from eth_cache.rpc import CacheRPC
 
 # local imports
-from eth_monitor.store.file import FileStore
 from eth_monitor.index import AddressIndex
-from eth_monitor.rpc import CacheRPC
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.rules import AddressRules
         

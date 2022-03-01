@@ -9,11 +9,11 @@ import time
 from chainlib.encode import TxHexNormalizer
 from chainlib.eth.connection import EthHTTPConnection
 from chainlib.chain import ChainSpec
+from eth_cache.store.file import FileStore
 
 # local imports
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.filters import RuledFilter
-from eth_monitor.store.file import FileStore
 from eth_monitor.rules import (
         AddressRules,
         RuleSimple,
@@ -33,6 +33,8 @@ argparser.add_argument('--store-block-data', dest='store_block_data', action='st
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-f', '--address-file', dest='address_file', default=[], type=str, action='append', help='Add addresses from file')
 argparser.add_argument('-a', '--address', default=[], type=str, action='append', help='Add address')
+argparser.add_argument('--socks-host', dest='socks_host', type=str, help='Conect through socks host')
+argparser.add_argument('--socks-port', dest='socks_port', type=int, help='Conect through socks port')
 argparser.add_argument('--delay', type=float, default=0.2, help='Seconds to wait between each retrieval from importer')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
@@ -54,7 +56,7 @@ rpc = EthHTTPConnection(args.p)
 
 chain_spec = ChainSpec.from_chain_str(args.i)
 
-def conn_socks_tor(host='127.0.0.1', port=9050):
+def conn_socks(host, port):
     import socks
     import socket
 
@@ -114,7 +116,8 @@ def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data, add
 
 
 def main():
-    conn_socks_tor()
+    if args.socks_host != None:
+        conn_socks(args.socks_host, args.socks_port)
     addresses = collect_addresses(args.address, args.address_file)
 
     from eth_monitor.importers.etherscan import Importer as EtherscanImporter

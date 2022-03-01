@@ -43,7 +43,7 @@ class AddressIndex:
 
             k = '{}.{}'.format(block_number, tx_index)
 
-            txs[k] = tx
+            txs[float(k)] = tx
 
         ks = list(txs.keys())
         ks.sort()

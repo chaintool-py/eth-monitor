@@ -19,6 +19,8 @@ from chainsyncer.driver.head import HeadSyncer
 from chainsyncer.driver.history import HistorySyncer
 from chainsyncer.backend.file import FileBackend
 from chainsyncer.filter import NoopFilter
+from eth_cache.rpc import CacheRPC
+from eth_cache.store.file import FileStore
 
 # local imports
 from eth_monitor.chain import EthChainInterface
@@ -29,8 +31,6 @@ from eth_monitor.rules import (
         )
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
-from eth_monitor.store.file import FileStore
-from eth_monitor.rpc import CacheRPC
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()

@@ -17,6 +17,7 @@ def apply(c, result, chain_spec, conn, block, tx, db_session=None):
     value = value.rstrip('0')
     if value[len(value)-1] == '.':
         value += '0'
-    s = '{} {}\t{} -> {} = {}'.format(timestamp, tx.hash, tx.outputs[0], tx.inputs[0], value)
+
+    s = '{} {} {}\t{} -> {} = {}'.format(timestamp, tx.hash, tx.status.name, tx.outputs[0], tx.inputs[0], value)
     result.set(s)
     return False
