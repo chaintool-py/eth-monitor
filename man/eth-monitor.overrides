@@ -11,3 +11,5 @@ includesfile	Load address include matching rules from file. See \fBMATCHING ADDR
 excludesfile	Load address exclude matching rules from file. See \fBMATCHING ADDRESSES\fP.	--excludes-file	file
 storetx	Store transaction data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-tx-data	
 storeblock	Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-block-data	
+renderer	Add output renderer filter to all matched transactions. The argument must be a python module path. Several renderers may be added by supplying the option multiple times. See \fBRENDERERS\fP section of \fBeth-monitor (1)\fP for more details.	--renderer	module
+filter	Add code execution filter to all matched transactions. The argument must be a python module path. Several filters may be added by supplying the option multiple times. Filters will be executed in the order the options are given. See \fBDEFINING FILTERS\fP section of \fBeth-monitor (1)\fP for more details.	--filter	module

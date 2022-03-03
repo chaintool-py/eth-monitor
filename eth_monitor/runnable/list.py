@@ -29,9 +29,7 @@ from eth_monitor.rules import AddressRules
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
-default_eth_provider = os.environ.get('RPC_PROVIDER')
-if default_eth_provider == None:
-    default_eth_provider = os.environ.get('ETH_PROVIDER', 'http://localhost:8545')
+default_eth_provider = os.environ.get('RPC_PROVIDER', 'http://localhost:8545')
 
 script_dir = os.path.realpath(os.path.dirname(__file__))
 exec_dir = os.path.realpath(os.getcwd())
@@ -44,7 +42,7 @@ argparser.add_argument('-p', '--provider', dest='p', default=default_eth_provide
 argparser.add_argument('-c', type=str, help='config file')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='Chain specification string')
 argparser.add_argument('--seq', action='store_true', help='Use sequential rpc ids')
-argparser.add_argument('--output', default=[], action='append', type=str, help='Add output (sender) addresses to includes list')
+argparser.add_argument('-a', '--address', dest='a', default=[], action='append', type=str, help='Add address to includes list')
 argparser.add_argument('--filter', type=str, action='append', help='Add python module filter path')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
@@ -95,7 +93,7 @@ def main():
 
     idx = AddressIndex(rpc, store)
 
-    for address in args.output:
+    for address in args.a:
         idx.load_address_tx(address)
 
     OutFilter.init(store)

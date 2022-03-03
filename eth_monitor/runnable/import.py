@@ -24,6 +24,9 @@ logg = logging.getLogger()
 
 normalize_address = TxHexNormalizer().wallet_address
 
+services = [
+    'etherscan',
+        ]
 
 argparser = argparse.ArgumentParser('master eth events monitor')
 argparser.add_argument('--api-key-file', dest='api_key_file', type=str, help='File to read API key from')
@@ -31,7 +34,8 @@ argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Director
 argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
-argparser.add_argument('-f', '--address-file', dest='address_file', default=[], type=str, action='append', help='Add addresses from file')
+argparser.add_argument('--address-file', dest='address_file', default=[], type=str, action='append', help='Add addresses from file')
+argparser.add_argument('--list-services', dest='list', action='store_true', help='List all supported services')
 argparser.add_argument('-a', '--address', default=[], type=str, action='append', help='Add address')
 argparser.add_argument('--socks-host', dest='socks_host', type=str, help='Conect through socks host')
 argparser.add_argument('--socks-port', dest='socks_port', type=int, help='Conect through socks port')
@@ -39,7 +43,17 @@ argparser.add_argument('--delay', type=float, default=0.2, help='Seconds to wait
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
 argparser.add_argument('-p', type=str, help='RPC provider')
+argparser.add_argument('service', nargs='?', type=str, help='Index service to import from')
 args = argparser.parse_args(sys.argv[1:])
+
+if args.list:
+    for s in services:
+        sys.stdout.write('{}\n'.format(s))
+    sys.exit(0)
+
+if not args.service:
+    argparser.error('the following arguments are required: service')
+    sys.exit(1)
 
 if args.vv:
     logg.setLevel(logging.DEBUG)
@@ -140,7 +154,11 @@ def main():
             cache_filter,
             ]
 
-    importer = EtherscanImporter(rpc, api_key, filters=filters, block_callback=RuledFilter.block_callback)
+    importer = []
+    if args.service == 'etherscan':
+        importer = EtherscanImporter(rpc, api_key, filters=filters, block_callback=RuledFilter.block_callback)
+    else:
+        raise ValueError('invalid service: {}'.format(args.service))
     for a in addresses:
         importer.get(a)
         time.sleep(args.delay)

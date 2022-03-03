@@ -1,0 +1,6 @@
+addressfile	Load address include matching rules from file. Addresses must be given as a comma-separated list.	--address-file	file
+storetx	Store transaction data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-tx-data	
+storeblock	Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-block-data	
+list	List all supported services.	--list-services	
+sockshost	Connect through the specified socks4a host (e.g. tor)	--socks-host	host
+socksport	Connect through the specified socks4a host port (e.g. tor)	--socks-port	port

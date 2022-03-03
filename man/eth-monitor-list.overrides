@@ -1,0 +1,4 @@
+fresh	Only use hashes from cache, and retrieve all block and transaction data from RPC endpoint.	--fresh	
+address	Add an address of interest to match any role. Complements \fB--address-file\fP.	--address	address
+filter	Add code execution filter to all matching transactions. The argument must be a python module path. Several filters may be added by supplying the option multiple times. Filters will be executed in the order the options are given. See \fBDEFINING FILTERS\fP section of \fBeth-monitor (1)\fP for more details.	--filter	module
+renderer	Add output renderer filter to all matching transactions. The argument must be a python module path. Several renderers may be added by supplying the option multiple times. See \fBRENDERERS\fP section of \fBeth-monitor (1)\fP for more details.	--renderer	module

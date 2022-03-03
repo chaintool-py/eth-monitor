@@ -1,0 +1,22 @@
+.TH eth-monitor-list 1
+
+
+.SH NAME
+eth-monitor-list \- Query transactions cache
+
+
+.SH SYNOPSIS
+.SY eth-monitor-list
+[ -i \fIchain_spec\fP ] [ p \fIeth_provider\fP ] [ -a \fIaddress\fP ... ] \fIcache_dir\fP
+.YS
+
+
+.SH DESCRIPTION
+List transactions stored in cache matching the given address.
+.P
+Any block data and/or transaction data matchin the relevant hashes returned by the query will be used to create the output. The \fB--fresh\fP option may be defined to force all block and transaction data from the RPC provider endpoint instead.
+.P
+For details on rendering and filtering, please refer to to \fBeth-monitor (1)\fP man page.
+
+
+.SS OPTIONS

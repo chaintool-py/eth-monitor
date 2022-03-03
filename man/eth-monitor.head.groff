@@ -5,15 +5,14 @@ eth-monitor \- Cache, index and monitor transactions with an EVM node rpc
 
 .SH SYNOPSIS
 .SY eth-monitor
-[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --includes-file \fIfile\fP ] 
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --includes-file \fIfile\fP ] [ -i chain_spec ] 
 .YS
 .SY eth-monitor
-[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --excludes-file \fIfile\fP ] [ --include-default ] 
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --excludes-file \fIfile\fP ] [ --include-default ] [ -i chain_spec ] 
 .YS
 
 
 .SH DESCRIPTION
-.P
 The \fBeth-monitor\fP has fulfills three distinct but related functions:
 .IP
 1. A customizable view of on transactions of interest.
