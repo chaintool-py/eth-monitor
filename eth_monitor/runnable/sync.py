@@ -218,7 +218,7 @@ def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data):
     store = None
     if cache_dir == None:
         logg.warning('no cache dir specified, will discard everything!!')
-        from eth_monitor.store.null import NullStore
+        from eth_cache.store.null import NullStore
         store = NullStore()
     else:
         store = FileStore(chain_spec, cache_dir)
