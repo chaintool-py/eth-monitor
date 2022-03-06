@@ -1,3 +1,5 @@
+- 0.2.0
+	* Dependency upgrades
 - 0.1.0
 	* Read blocks, tx, rcpt from cache
 	* Read include and exclude address lists from cli options

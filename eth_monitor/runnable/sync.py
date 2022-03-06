@@ -31,6 +31,7 @@ from eth_monitor.rules import (
         )
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
+from eth_monitor.config import override, list_from_prefix
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -104,9 +105,9 @@ config.add(args.offset, '_SYNC_OFFSET', True)
 config.add(args.skip_history, '_NO_HISTORY', True)
 config.add(args.single, '_SINGLE', True)
 config.add(args.head, '_HEAD', True)
-logg.debug('loaded config:\{}'.format(config))
-
-logg.debug('config loaded:\n{}'.format(config))
+override(config, 'renderer', env=os.environ, args=args)
+override(config, 'filter', env=os.environ, args=args)
+logg.debug('loaded config:\n{}'.format(config))
 
 chain_spec = ChainSpec.from_chain_str(args.i)
 
@@ -326,12 +327,18 @@ def main():
             cache_filter, 
             ]
 
-    if args.filter != None:
-        for fltr in args.filter:
-            m = importlib.import_module(fltr)
-            fltr_object = m.Filter(rules_filter=address_rules)
-            filters.append(fltr_object)
-        
+    for fltr in list_from_prefix(config, 'filter'):
+        m = importlib.import_module(fltr)
+        fltr_object = m.Filter(rules_filter=address_rules)
+        filters.append(fltr_object)
+        logg.info('using filter module {}'.format(fltr))
+
+    renderers_mods = []
+    for renderer in list_from_prefix(config, 'renderer'):
+        m = importlib.import_module(renderer)
+        renderers_mods.append(m)
+        logg.info('using renderer module {}'.format(renderer))
+
     syncer_setup_func = None
     if config.true('_HEAD'):
         syncer_setup_func = setup_backend_head
@@ -352,18 +359,13 @@ def main():
                 skip_history=config.true('_NO_HISTORY'),
                 )
 
-    renderers_mods = []
-    for renderer in args.renderer:
-        m = importlib.import_module(renderer)
-        renderers_mods.append(m)
-
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
     filters.append(out_filter)
     
     use_rpc = rpc
     if not args.fresh:
         use_rpc = CacheRPC(rpc, store)
-    
+   
     i = 0
     for syncer in syncers:
         logg.info('running syncer index {} {}'.format(i, str(syncer)))
