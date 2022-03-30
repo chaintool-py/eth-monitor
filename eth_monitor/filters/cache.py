@@ -15,8 +15,8 @@ class Filter(RuledFilter):
 
     def filter(self, conn, block, tx, db_session=None):
         r = super(Filter, self).filter(conn, block, tx, db_session=db_session)
-        if r == False:
+        if r == True:
             return True
 
         self.ruled_filter(conn, block, tx, db_session=db_session)
-        return True
+        return False

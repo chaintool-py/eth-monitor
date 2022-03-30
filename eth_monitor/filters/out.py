@@ -45,7 +45,7 @@ class OutFilter(RuledFilter):
 
     def filter(self, conn, block, tx, db_session=None):
         r = super(OutFilter, self).filter(conn, block, tx, db_session=db_session)
-        if r == False:
+        if r == True:
             return True
 
         for renderer in self.renderers:
@@ -65,3 +65,4 @@ class OutFilter(RuledFilter):
 
         self.w.write(s + '\n')
         self.c += 1
+        return False
