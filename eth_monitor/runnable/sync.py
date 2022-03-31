@@ -7,6 +7,7 @@ import logging
 import os
 import importlib
 import uuid
+import datetime
 
 # external imports
 from chainlib.chain import ChainSpec
@@ -116,9 +117,9 @@ override(config, 'renderer', env=os.environ, args=args)
 override(config, 'filter', env=os.environ, args=args)
 
 if config.get('_SESSION_ID') == None:
-    if not config.get('_SINGLE'):
-        #config.add('_SESSION_ID', str(uuid.uuid4()), True)
-    #else:
+    if config.get('_SINGLE'):
+        config.add(str(uuid.uuid4()), '_SESSION_ID', True)
+    else:
         config.add('default', '_SESSION_ID', True)
 logg.debug('loaded config:\n{}'.format(config))
 
@@ -257,7 +258,7 @@ def post_callback():
 
 
 def block_callback(block, tx):
-    logg.debug('processing block {}'.format(block))
+    logg.info('processing {} {}'.format(block, datetime.datetime.fromtimestamp(block.timestamp)))
 
 
 def main():
