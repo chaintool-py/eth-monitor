@@ -35,6 +35,7 @@ from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.config import override, list_from_prefix
 
+logging.STATETRACE = 5
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
@@ -83,7 +84,7 @@ argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose'
 args = argparser.parse_args(sys.argv[1:])
 
 if args.vvv:
-    logg.setLevel(logging.DEBUG)
+    logg.setLevel(logging.STATETRACE)
 else:
     logging.getLogger('chainlib.connection').setLevel(logging.WARNING)
     logging.getLogger('chainlib.eth.tx').setLevel(logging.WARNING)
@@ -261,6 +262,14 @@ def block_callback(block, tx):
     logg.info('processing {} {}'.format(block, datetime.datetime.fromtimestamp(block.timestamp)))
 
 
+def state_change_callback(k, old_state, new_state):
+    logg.log(logging.STATETRACE, 'state change: {} {} -> {}'.format(k, old_state, new_state)) 
+
+
+def filter_change_callback(k, old_state, new_state):
+    logg.log(logging.STATETRACE, 'filter change: {} {} -> {}'.format(k, old_state, new_state)) 
+
+
 def main():
     o = block_latest()
     r = rpc.do(o)
@@ -334,7 +343,7 @@ def main():
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
     filters.append(out_filter)
 
-    sync_store = SyncFsStore(config.get('_STATE_DIR'), session_id=config.get('_SESSION_ID'))
+    sync_store = SyncFsStore(config.get('_STATE_DIR'), session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
     logg.info('session is {}'.format(sync_store.session_id))
 
     for fltr in filters:
