@@ -278,8 +278,8 @@ def main():
         session_block_offset = args.offset
 
     if args.until > 0:
-        if not args.head and args.until <= block_offset:
-            raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(block_offset, args.until))
+        if not args.head and args.until <= session_block_offset:
+            raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(session_block_offset, args.until))
         block_limit = args.until
     elif config.true('_KEEP_ALIVE'):
         keep_alive=True

@@ -30,7 +30,7 @@ services = [
 
 argparser = argparse.ArgumentParser('master eth events monitor')
 argparser.add_argument('--api-key-file', dest='api_key_file', type=str, help='File to read API key from')
-argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
+argparser.add_argument('--cache-dir', dest='cache_dir', type=str, default='.eth-monitor/cache', help='Directory to store tx data')
 argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
 argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
