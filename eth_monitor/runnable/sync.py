@@ -31,6 +31,7 @@ from eth_monitor.rules import (
         AddressRules,
         RuleSimple,
         RuleMethod,
+        RuleData,
         )
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
@@ -62,8 +63,10 @@ argparser.add_argument('--keep-alive', action='store_true', dest='keep_alive', h
 argparser.add_argument('--input', default=[], action='append', type=str, help='Add input (recipient) addresses to includes list')
 argparser.add_argument('--output', default=[], action='append', type=str, help='Add output (sender) addresses to includes list')
 argparser.add_argument('--exec', default=[], action='append', type=str, help='Add exec (contract) addresses to includes list')
-argparser.add_argument('--data', default=[], action='append', type=str, help='Add data strings to include list')
-argparser.add_argument('--x-data', default=[], action='append', dest='xdata', type=str, help='Add data strings to exclude list')
+argparser.add_argument('--data', default=[], action='append', type=str, help='Add data prefix strings to include list')
+argparser.add_argument('--data-in', default=[], action='append', dest='data_in', type=str, help='Add data contain strings to include list')
+argparser.add_argument('--x-data', default=[], action='append', dest='xdata', type=str, help='Add data prefix string to exclude list')
+argparser.add_argument('--x-data-in', default=[], action='append', dest='xdata_in', type=str, help='Add data contain string to exclude list')
 argparser.add_argument('--address', default=[], action='append', type=str, help='Add addresses as input, output and exec to includes list')
 argparser.add_argument('--x-input', default=[], action='append', type=str, dest='xinput', help='Add input (recipient) addresses to excludes list')
 argparser.add_argument('--x-output', default=[], action='append', type=str, dest='xoutput', help='Add output (sender) addresses to excludes list')
@@ -168,13 +171,30 @@ def setup_address_arg_rules(rules, args):
 
 
 def setup_data_arg_rules(rules, args):
-    include_data = args.data
-    exclude_data = args.xdata
+    include_data = []
+    for v in args.data:
+        include_data.append(v.lower())
+    exclude_data = []
+    for v in args.xdata:
+        exclude_data.append(v.lower())
 
     includes = RuleMethod(include_data, description='INCLUDE')
     rules.include(includes)
    
     excludes = RuleMethod(exclude_data, description='EXCLUDE')
+    rules.exclude(excludes)
+
+    include_data = []
+    for v in args.data_in:
+        include_data.append(v.lower())
+    exclude_data = []
+    for v in args.xdata_in:
+        exclude_data.append(v.lower())
+
+    includes = RuleData(include_data, description='INCLUDE')
+    rules.include(includes)
+   
+    excludes = RuleData(exclude_data, description='EXCLUDE')
     rules.exclude(excludes)
 
     return rules

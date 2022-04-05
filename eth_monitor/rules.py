@@ -8,6 +8,37 @@ from chainlib.eth.address import is_same_address
 logg = logging.getLogger()
 
 
+
+class RuleData:
+
+    def __init__(self, fragments, description=None):
+        self.fragments = fragments
+        self.description = description
+        if self.description == None:
+            self.description = str(uuid.uuid4())
+
+
+    def check(self, sender, recipient, data, tx_hash):
+        if len(self.fragments) == 0:
+            return False
+
+        for fragment in self.fragments:
+            l = len(fragment)
+            if len(fragment) > len(data):
+                continue
+            if fragment in data:
+                logg.debug('tx {} rule {} match in DATA FRAGMENT {}'.format(tx_hash, self.description, fragment))
+                return True
+        
+        return False
+
+
+    def __str__(self):
+        return 'Fragment ' + self.description + ' {}'.format(
+                self.fragments,
+                )
+
+
 class RuleMethod:
 
     def __init__(self, methods, description=None):

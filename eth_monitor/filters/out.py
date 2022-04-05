@@ -69,7 +69,7 @@ class OutFilter(RuledFilter):
                 data = 'data {}'.format(data)
             #s = '{} {} {} {}'.format(self.c, block, tx, data)
             tx_count = len(block.txs)
-            s = '{} {} block {} {} tx {}/{} {} {}'.format(
+            s = '{} {} block {} {} tx {}/{} {} {} {}'.format(
                     self.c,
                     datetime.datetime.fromtimestamp(block.timestamp),
                     block.number,
@@ -77,6 +77,7 @@ class OutFilter(RuledFilter):
                     tx.index,
                     tx_count,
                     strip_0x(tx.hash),
+                    tx.status,
                     data,
                     )
 
