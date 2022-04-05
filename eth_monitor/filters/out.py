@@ -1,6 +1,12 @@
 # standard imports
 import sys
 import logging
+import datetime
+
+# external imports
+from hexathon import (
+        strip_0x,
+        )
 
 # local imports
 from .base import RuledFilter
@@ -61,7 +67,18 @@ class OutFilter(RuledFilter):
                 data = data[:8] + '...'
             if len(data) > 0:
                 data = 'data {}'.format(data)
-            s = '{} {} {} {}'.format(self.c, block, tx, data)
+            #s = '{} {} {} {}'.format(self.c, block, tx, data)
+            tx_count = len(block.txs)
+            s = '{} {} block {} {} tx {}/{} {} {}'.format(
+                    self.c,
+                    datetime.datetime.fromtimestamp(block.timestamp),
+                    block.number,
+                    strip_0x(block.hash),
+                    tx.index,
+                    tx_count,
+                    strip_0x(tx.hash),
+                    data,
+                    )
 
         self.w.write(s + '\n')
         self.c += 1

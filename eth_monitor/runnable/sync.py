@@ -30,6 +30,7 @@ from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.rules import (
         AddressRules,
         RuleSimple,
+        RuleMethod,
         )
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
@@ -61,6 +62,8 @@ argparser.add_argument('--keep-alive', action='store_true', dest='keep_alive', h
 argparser.add_argument('--input', default=[], action='append', type=str, help='Add input (recipient) addresses to includes list')
 argparser.add_argument('--output', default=[], action='append', type=str, help='Add output (sender) addresses to includes list')
 argparser.add_argument('--exec', default=[], action='append', type=str, help='Add exec (contract) addresses to includes list')
+argparser.add_argument('--data', default=[], action='append', type=str, help='Add data strings to include list')
+argparser.add_argument('--x-data', default=[], action='append', dest='xdata', type=str, help='Add data strings to exclude list')
 argparser.add_argument('--address', default=[], action='append', type=str, help='Add addresses as input, output and exec to includes list')
 argparser.add_argument('--x-input', default=[], action='append', type=str, dest='xinput', help='Add input (recipient) addresses to excludes list')
 argparser.add_argument('--x-output', default=[], action='append', type=str, dest='xoutput', help='Add output (sender) addresses to excludes list')
@@ -155,10 +158,23 @@ def setup_address_arg_rules(rules, args):
         exclude_outputs.append(address)
         exclude_exec.append(address)
 
-    includes = RuleSimple(include_outputs, include_inputs, include_exec)
+    includes = RuleSimple(include_outputs, include_inputs, include_exec, description='INCLUDE')
     rules.include(includes)
 
-    excludes = RuleSimple(exclude_outputs, exclude_inputs, exclude_exec)
+    excludes = RuleSimple(exclude_outputs, exclude_inputs, exclude_exec, description='EXCLUDE')
+    rules.exclude(excludes)
+
+    return rules
+
+
+def setup_data_arg_rules(rules, args):
+    include_data = args.data
+    exclude_data = args.xdata
+
+    includes = RuleMethod(include_data, description='INCLUDE')
+    rules.include(includes)
+   
+    excludes = RuleMethod(exclude_data, description='EXCLUDE')
     rules.exclude(excludes)
 
     return rules
@@ -301,6 +317,10 @@ def main():
             block_limit = block_offset
 
     address_rules = AddressRules(include_by_default=args.include_default)
+    address_rules = setup_data_arg_rules(
+            address_rules,
+            args,
+            )
     address_rules = setup_address_file_rules(
             address_rules,
             includes_file=args.includes_file,
