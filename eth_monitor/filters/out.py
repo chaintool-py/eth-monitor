@@ -77,7 +77,7 @@ class OutFilter(RuledFilter):
                     tx.index,
                     tx_count,
                     strip_0x(tx.hash),
-                    tx.status,
+                    tx.status.name,
                     data,
                     )
 
