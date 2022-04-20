@@ -17,7 +17,7 @@ from hexathon import (
         strip_0x,
         add_0x,
         )
-from chainsyncer.store.fs import SyncFsStore
+#from chainsyncer.store.fs import SyncFsStore
 from chainsyncer.driver.chain_interface import ChainInterfaceDriver
 from chainsyncer.error import SyncDone
 
@@ -84,10 +84,20 @@ argparser.add_argument('--state-dir', dest='state_dir', default=exec_dir, type=s
 argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
 argparser.add_argument('--single', action='store_true', help='Execute a single sync, regardless of previous states')
 argparser.add_argument('--session-id', dest='session_id', type=str, help='Use state from specified session id')
+argparser.add_argument('--backend', type=str, help='State store backend')
+argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
 argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose')
 args = argparser.parse_args(sys.argv[1:])
+
+if args.list_backends:
+    for v in [
+            'fs',
+            'rocksdb',
+            ]:
+        print(v)
+    sys.exit(0)
 
 if args.vvv:
     logg.setLevel(logging.STATETRACE)
@@ -110,6 +120,7 @@ config = confini.Config(base_config_dir, os.environ.get('CONFINI_ENV_PREFIX'), o
 config.process()
 args_override = {
         'CHAIN_SPEC': getattr(args, 'i'),
+        'SYNCER_BACKEND': getattr(args, 'backend'),
         }
 config.dict_override(args_override, 'cli')
 config.add(args.offset, '_SYNC_OFFSET', True)
@@ -383,7 +394,22 @@ def main():
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
     filters.append(out_filter)
 
-    sync_store = SyncFsStore(config.get('_STATE_DIR'), session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
+    syncer_store_module = None
+    syncer_store_class = None
+    if config.get('SYNCER_BACKEND') == 'fs': 
+        syncer_store_module = importlib.import_module('chainsyncer.store.fs')
+        syncer_store_class = getattr(syncer_store_module, 'SyncFsStore')
+    elif config.get('SYNCER_BACKEND') == 'rocksdb':
+        syncer_store_module = importlib.import_module('chainsyncer.store.rocksdb')
+        syncer_store_class = getattr(syncer_store_module, 'SyncRocksDbStore')
+    else:
+        syncer_store_module = importlib.import_module(config.get('SYNCER_BACKEND'))
+        syncer_store_class = getattr(syncer_store_module, 'SyncStore')
+
+    logg.info('using engine {} module {}.{}'.format(config.get('SYNCER_BACKEND'), syncer_store_module.__file__, syncer_store_class.__name__))
+
+    state_dir = os.path.join(config.get('_STATE_DIR'), config.get('SYNCER_BACKEND'))
+    sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
     logg.info('session is {}'.format(sync_store.session_id))
 
     for fltr in filters:
