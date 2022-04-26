@@ -95,6 +95,7 @@ if args.list_backends:
     for v in [
             'fs',
             'rocksdb',
+            'mem',
             ]:
         print(v)
     sys.exit(0)
@@ -396,20 +397,28 @@ def main():
 
     syncer_store_module = None
     syncer_store_class = None
-    if config.get('SYNCER_BACKEND') == 'fs': 
-        syncer_store_module = importlib.import_module('chainsyncer.store.fs')
-        syncer_store_class = getattr(syncer_store_module, 'SyncFsStore')
-    elif config.get('SYNCER_BACKEND') == 'rocksdb':
-        syncer_store_module = importlib.import_module('chainsyncer.store.rocksdb')
-        syncer_store_class = getattr(syncer_store_module, 'SyncRocksDbStore')
+    state_dir = None
+    if config.get('SYNCER_BACKEND') == 'mem':
+        syncer_store_module = importlib.import_module('chainsyncer.store.mem')
+        syncer_store_class = getattr(syncer_store_module, 'SyncMemStore')
     else:
-        syncer_store_module = importlib.import_module(config.get('SYNCER_BACKEND'))
-        syncer_store_class = getattr(syncer_store_module, 'SyncStore')
+        if config.get('SYNCER_BACKEND') == 'fs': 
+            syncer_store_module = importlib.import_module('chainsyncer.store.fs')
+            syncer_store_class = getattr(syncer_store_module, 'SyncFsStore')
+        elif config.get('SYNCER_BACKEND') == 'rocksdb':
+            syncer_store_module = importlib.import_module('chainsyncer.store.rocksdb')
+            syncer_store_class = getattr(syncer_store_module, 'SyncRocksDbStore')
+        else:
+            syncer_store_module = importlib.import_module(config.get('SYNCER_BACKEND'))
+            syncer_store_class = getattr(syncer_store_module, 'SyncStore')
+        state_dir = os.path.join(config.get('_STATE_DIR'), config.get('SYNCER_BACKEND'))
 
     logg.info('using engine {} module {}.{}'.format(config.get('SYNCER_BACKEND'), syncer_store_module.__file__, syncer_store_class.__name__))
 
-    state_dir = os.path.join(config.get('_STATE_DIR'), config.get('SYNCER_BACKEND'))
-    sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
+    if state_dir == None:
+        sync_store = syncer_store_class(session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
+    else:
+        sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
     logg.info('session is {}'.format(sync_store.session_id))
 
     for fltr in filters:
