@@ -415,6 +415,7 @@ def main():
 
     logg.info('using engine {} module {}.{}'.format(config.get('SYNCER_BACKEND'), syncer_store_module.__file__, syncer_store_class.__name__))
 
+    state_dir = os.path.join(state_dir, config.get('_SESSION_ID'))
     if state_dir == None:
         sync_store = syncer_store_class(session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
     else:
