@@ -1,3 +1,9 @@
+- 0.4.5
+	* Upgrade chainsyncer
+- 0.4.4
+	* Upgrade deps	
+- 0.4.3
+	* Upgrade deps	
 - 0.4.2
 	* Implement non-persistent (in-memory) sync state
 - 0.4.1

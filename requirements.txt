@@ -1,5 +1,5 @@
-chainlib-eth~=0.1.1
+chainlib-eth~=0.1.2
 chainlib~=0.1.2
-chainsyncer~=0.4.0
+chainsyncer~=0.4.4
 leveldir~=0.3.0
-eth-cache~=0.1.0
+eth-cache~=0.1.2
