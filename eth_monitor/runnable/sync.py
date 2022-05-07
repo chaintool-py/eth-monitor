@@ -36,6 +36,7 @@ from eth_monitor.rules import (
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.config import override, list_from_prefix
+from eth_monitor.callback import BlockCallbackFilter
 
 logging.STATETRACE = 5
 logging.basicConfig(level=logging.WARNING)
@@ -78,7 +79,8 @@ argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_tr
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
 argparser.add_argument('--address-file', type=str, dest='excludes_file', help='Load exclude rules from file')
 argparser.add_argument('--renderer', type=str, action='append', default=[], help='Python modules to dynamically load for rendering of transaction output')
-argparser.add_argument('--filter', type=str, action='append', help='Add python module filter path')
+argparser.add_argument('--filter', type=str, action='append', help='Add python module to tx filter path')
+argparser.add_argument('--block-filter', type=str, dest='block_filter', action='append', help='Add python module to block filter path')
 argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
 argparser.add_argument('--state-dir', dest='state_dir', default=exec_dir, type=str, help='Directory to store sync state')
 argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
@@ -134,6 +136,7 @@ config.add(args.cache_dir, '_CACHE_DIR', True)
 config.add(args.session_id, '_SESSION_ID', True)
 override(config, 'renderer', env=os.environ, args=args)
 override(config, 'filter', env=os.environ, args=args)
+override(config, 'block_filter', env=os.environ, args=args)
 
 if config.get('_SESSION_ID') == None:
     if config.get('_SINGLE'):
@@ -390,6 +393,12 @@ def main():
         renderers_mods.append(m)
         logg.info('using renderer module {}'.format(renderer))
 
+    block_filter_handler = BlockCallbackFilter()
+    for block_filter in list_from_prefix(config, 'block_filter'):
+        m = importlib.import_module(block_filter)
+        block_filter_handler.register(m)
+        logg.info('using block filter module {}'.format(block_filter))
+
     chain_interface = EthChainInterface()
 
     out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
@@ -424,7 +433,7 @@ def main():
 
     for fltr in filters:
         sync_store.register(fltr)
-    drv = ChainInterfaceDriver(sync_store, chain_interface, offset=session_block_offset, target=block_limit, pre_callback=pre_callback, post_callback=post_callback, block_callback=block_callback)
+    drv = ChainInterfaceDriver(sync_store, chain_interface, offset=session_block_offset, target=block_limit, pre_callback=pre_callback, post_callback=post_callback, block_callback=block_filter_handler.filter)
     
     use_rpc = rpc
     if not args.fresh:
