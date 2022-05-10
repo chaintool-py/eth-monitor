@@ -1,16 +1,51 @@
+# local imports
+from .rules import (
+        rules_address_args,
+        rules_data_args,
+        to_config_names,
+        )
+
 def process_config(config, args, flags):
     arg_override = {}
-    arg_override['ETHMONITOR_INPUTS'] = getattr(args, 'input')
-    arg_override['ETHMONITOR_OUTPUTS'] = getattr(args, 'output')
-    arg_override['ETHMONITOR_EXEC'] = getattr(args, 'exec')
-    arg_override['ETHMONITOR_ADDRESS'] = getattr(args, 'address')
-    arg_override['ETHMONITOR_X_INPUTS'] = getattr(args, 'xinput')
-    arg_override['ETHMONITOR_X_OUTPUTS'] = getattr(args, 'xoutput')
-    arg_override['ETHMONITOR_X_EXEC'] = getattr(args, 'xexec')
-    arg_override['ETHMONITOR_X_ADDRESS'] = getattr(args, 'xaddress')
+
+    rules_args = rules_address_args + rules_data_args
+
+    for rules_arg in rules_args:
+        (vy, vn) = to_config_names(rules_arg)
+        arg = getattr(args, rules_arg)
+        if arg == None:
+            v = config.get(vy)
+            if bool(v):
+                arg_override[vy] = v.split(',')
+        else:
+            arg_override[vy] = arg
+
+        arg = getattr(args, 'x_' + rules_arg)
+        if arg == None:
+            v = config.get(vn)
+            if bool(v):
+                arg_override[vn] = v.split(',')
+        else:
+            arg_override[vn] = arg
+
+    arg_override['ETHMONITOR_INCLUDES_FILE'] = getattr(args, 'includes_file')
+    arg_override['ETHMONITOR_EXCLUDES_FILE'] = getattr(args, 'excludes_file')
     arg_override['ETHMONITOR_INCLUDE_DEFAULT'] = getattr(args, 'include_default')
 
+    arg_override['ETHMONITOR_RENDERER'] = getattr(args, 'renderer')
+    arg_override['ETHMONITOR_FILTER'] = getattr(args, 'filter')
+    arg_override['ETHMONITOR_BLOCK_FILTER'] = getattr(args, 'block_filter')
+
+    arg_override['ETHMONITOR_STATE_DIR'] = getattr(args, 'state_dir')
+
     config.dict_override(arg_override, 'local cli args')
+
+    for rules_arg in rules_args:
+        (vy, vn) = to_config_names(rules_arg)
+        if config.get(vy) == None:
+            config.add([], vy, True)
+        if config.get(vn) == None:
+            config.add([], vn, True)
 
     config.add(getattr(args, 'session_id'), '_SESSION_ID', False)
     config.add(getattr(args, 'cache_dir'), '_CACHE_DIR', False)

@@ -27,7 +27,6 @@ from eth_cache.rpc import CacheRPC
 from eth_cache.store.file import FileStore
 
 # local imports
-from eth_monitor.chain import EthChainInterface
 from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.rules import (
         AddressRules,
@@ -38,7 +37,11 @@ from eth_monitor.rules import (
 from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.config import override, list_from_prefix
-from eth_monitor.callback import BlockCallbackFilter
+from eth_monitor.callback import (
+        BlockCallbackFilter,
+        pre_callback,
+        post_callback,
+        )
 from eth_monitor.settings import EthMonitorSettings
 import eth_monitor.cli
 
@@ -61,9 +64,6 @@ eth_monitor.cli.process_flags(argparser, 0)
 
 argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
-argparser.add_argument('--renderer', type=str, action='append', default=[], help='Python modules to dynamically load for rendering of transaction output')
-argparser.add_argument('--filter', type=str, action='append', help='Add python module to tx filter path')
-argparser.add_argument('--block-filter', type=str, dest='block_filter', action='append', help='Add python module to block filter path')
 argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
 argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
 argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose')
@@ -124,100 +124,6 @@ logg.debug('loaded settings:\n{}'.format(settings))
 
 
 
-def setup_data_arg_rules(rules, args):
-    include_data = []
-    for v in args.data:
-        include_data.append(v.lower())
-    exclude_data = []
-    for v in args.xdata:
-        exclude_data.append(v.lower())
-
-    includes = RuleMethod(include_data, description='INCLUDE')
-    rules.include(includes)
-   
-    excludes = RuleMethod(exclude_data, description='EXCLUDE')
-    rules.exclude(excludes)
-
-    include_data = []
-    for v in args.data_in:
-        include_data.append(v.lower())
-    exclude_data = []
-    for v in args.xdata_in:
-        exclude_data.append(v.lower())
-
-    includes = RuleData(include_data, description='INCLUDE')
-    rules.include(includes)
-   
-    excludes = RuleData(exclude_data, description='EXCLUDE')
-    rules.exclude(excludes)
-
-    return rules
-
-
-def setup_address_file_rules(rules, includes_file=None, excludes_file=None, include_default=False, include_block_default=False):
-
-    if includes_file != None:
-        f = open(includes_file, 'r')
-        logg.debug('reading includes rules from {}'.format(os.path.realpath(includes_file)))
-        while True:
-            r = f.readline()
-            if r == '':
-                break
-            r = r.rstrip()
-            v = r.split("\t")
-
-            sender = []
-            recipient = []
-            executable = []
-
-            try:
-                if v[0] != '':
-                    sender = v[0].split(',')
-            except IndexError:
-                pass
-
-            try:
-                if v[1] != '':
-                    recipient = v[1].split(',')
-            except IndexError:
-                pass
-
-            try:
-                if v[2] != '':
-                    executable = v[2].split(',')
-            except IndexError:
-                pass
-
-            rule = RuleSimple(sender, recipient, executable)
-            rules.include(rule)
-
-    if excludes_file != None:
-        f = open(includes_file, 'r')
-        logg.debug('reading excludes rules from {}'.format(os.path.realpath(excludes_file)))
-        while True:
-            r = f.readline()
-            if r == '':
-                break
-            r = r.rstrip()
-            v = r.split("\t")
-
-            sender = None
-            recipient = None
-            executable = None
-
-            if v[0] != '':
-                sender = v[0].strip(',')
-            if v[1] != '':
-                recipient = v[1].strip(',')
-            if v[2] != '':
-                executable = v[2].strip(',')
-
-            rule = RuleSimple(sender, recipient, executable)
-            rules.exclude(rule)
-
-    return rules
-
-
 def setup_filter(chain_spec, cache_dir, include_tx_data, include_block_data):
     store = None
     if cache_dir == None:
@@ -240,24 +146,8 @@ def setup_cache_filter(rules_filter=None):
     return CacheFilter(rules_filter=rules_filter)
 
 
-def pre_callback():
-    logg.debug('starting sync loop iteration')
-
-
-def post_callback():
-    logg.debug('ending sync loop iteration')
-
-
 def block_callback(block, tx):
     logg.info('processing {} {}'.format(block, datetime.datetime.fromtimestamp(block.timestamp)))
-
-
-def state_change_callback(k, old_state, new_state):
-    logg.log(logging.STATETRACE, 'state change: {} {} -> {}'.format(k, old_state, new_state)) 
-
-
-def filter_change_callback(k, old_state, new_state):
-    logg.log(logging.STATETRACE, 'filter change: {} {} -> {}'.format(k, old_state, new_state)) 
 
 
 def main():
@@ -267,47 +157,6 @@ def main():
     block_offset = int(strip_0x(r), 16) + 1
     logg.info('network block height is {}'.format(block_offset))
 
-    keep_alive = False
-    session_block_offset = 0
-    block_limit = 0
-    if args.head:
-        session_block_offset = block_offset
-        block_limit = -1
-        keep_alive = True
-    else:
-        session_block_offset = args.offset
-
-    if args.until > 0:
-        if not args.head and args.until <= session_block_offset:
-            raise ValueError('sync termination block number must be later than offset ({} >= {})'.format(session_block_offset, args.until))
-        block_limit = args.until
-    elif config.true('_KEEP_ALIVE'):
-        keep_alive=True
-        block_limit = -1
-
-    if session_block_offset == -1:
-        session_block_offset = block_offset
-    elif not config.true('_KEEP_ALIVE'):
-        if block_limit == 0:
-            block_limit = block_offset
-
-    sys.exit(0)
-
-    #address_rules = AddressRules(include_by_default=args.include_default)
-    address_rules = setup_data_arg_rules(
-            address_rules,
-            args,
-            )
-    address_rules = setup_address_file_rules(
-            address_rules,
-            includes_file=args.includes_file,
-            excludes_file=args.excludes_file,
-            )
-    address_rules = setup_address_arg_rules(
-            address_rules,
-            args,
-            )
-
     store = setup_filter(
             settings.get('CHAIN_SPEC'),
             config.get('_CACHE_DIR'),
@@ -316,7 +165,7 @@ def main():
             )
 
     cache_filter = setup_cache_filter(
-            rules_filter=address_rules,
+            rules_filter=settings.get('RULES'), #address_rules,
             )
      
     filters = [
@@ -325,7 +174,7 @@ def main():
 
     for fltr in list_from_prefix(config, 'filter'):
         m = importlib.import_module(fltr)
-        fltr_object = m.Filter(rules_filter=address_rules)
+        fltr_object = m.Filter(rules_filter=settings.get('RULES'))
         filters.append(fltr_object)
         logg.info('using filter module {}'.format(fltr))
 
@@ -341,19 +190,26 @@ def main():
         block_filter_handler.register(m)
         logg.info('using block filter module {}'.format(block_filter))
 
-    chain_interface = EthChainInterface()
-
     out_filter = OutFilter(
             settings.get('CHAIN_SPEC'),
-            rules_filter=address_rules,renderers=renderers_mods,
+            rules_filter=settings.get('RULES'),
+            renderers=renderers_mods,
             )
     filters.append(out_filter)
 
     logg.info('session is {}'.format(settings.get('SESSION_ID')))
 
     for fltr in filters:
-        sync_store.register(fltr)
-    drv = ChainInterfaceDriver(sync_store, chain_interface, offset=session_block_offset, target=block_limit, pre_callback=pre_callback, post_callback=post_callback, block_callback=block_filter_handler.filter)
+        settings.get('SYNC_STORE').register(fltr)
+    drv = ChainInterfaceDriver(
+            settings.get('SYNC_STORE'),
+            settings.get('SYNCER_INTERFACE'),
+            offset=settings.get('SYNCER_OFFSET'),
+            target=settings.get('SYNCER_LIMIT'),
+            pre_callback=pre_callback,
+            post_callback=post_callback,
+            block_callback=block_filter_handler.filter,
+            )
     
     use_rpc = rpc
     if not args.fresh:
