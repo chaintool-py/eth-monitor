@@ -10,6 +10,8 @@ import uuid
 import datetime
 
 # external imports
+import chainlib.cli
+import chainsyncer.cli
 from chainlib.chain import ChainSpec
 from chainlib.eth.connection import EthHTTPConnection
 from chainlib.eth.block import block_latest
@@ -37,60 +39,38 @@ from eth_monitor.filters import RuledFilter
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.config import override, list_from_prefix
 from eth_monitor.callback import BlockCallbackFilter
+from eth_monitor.settings import EthMonitorSettings
+import eth_monitor.cli
 
 logging.STATETRACE = 5
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
-default_eth_provider = os.environ.get('RPC_PROVIDER')
-if default_eth_provider == None:
-    default_eth_provider = os.environ.get('ETH_PROVIDER', 'http://localhost:8545')
+#default_eth_provider = os.environ.get('RPC_PROVIDER')
+#if default_eth_provider == None:
+#    default_eth_provider = os.environ.get('ETH_PROVIDER', 'http://localhost:8545')
 
-script_dir = os.path.realpath(os.path.dirname(__file__))
-exec_dir = os.path.realpath(os.getcwd())
+#exec_dir = os.path.realpath(os.getcwd())
 #default_config_dir = os.environ.get('CONFINI_DIR', os.path.join(exec_dir, 'config'))
-base_config_dir = os.path.join(script_dir, '..', 'data', 'config')
+script_dir = os.path.realpath(os.path.dirname(__file__))
+config_dir = os.path.join(script_dir, '..', 'data', 'config')
 
-argparser = argparse.ArgumentParser('master eth events monitor')
-argparser.add_argument('-p', '--provider', dest='p', default=default_eth_provider, type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-c', type=str, help='config file')
-argparser.add_argument('-i', '--chain-spec', dest='i', type=str, help='Chain specification string')
-argparser.add_argument('--offset', type=int, default=0, help='Start sync on this block')
-argparser.add_argument('--until', type=int, default=0, help='Terminate sync on this block')
-argparser.add_argument('--head', action='store_true', help='Start at current block height (overrides --offset, assumes --keep-alive)')
-argparser.add_argument('--seq', action='store_true', help='Use sequential rpc ids')
-argparser.add_argument('--skip-history', action='store_true', dest='skip_history', help='Skip history sync')
-argparser.add_argument('--keep-alive', action='store_true', dest='keep_alive', help='Continue to sync head after history sync complete')
-argparser.add_argument('--input', default=[], action='append', type=str, help='Add input (recipient) addresses to includes list')
-argparser.add_argument('--output', default=[], action='append', type=str, help='Add output (sender) addresses to includes list')
-argparser.add_argument('--exec', default=[], action='append', type=str, help='Add exec (contract) addresses to includes list')
-argparser.add_argument('--data', default=[], action='append', type=str, help='Add data prefix strings to include list')
-argparser.add_argument('--data-in', default=[], action='append', dest='data_in', type=str, help='Add data contain strings to include list')
-argparser.add_argument('--x-data', default=[], action='append', dest='xdata', type=str, help='Add data prefix string to exclude list')
-argparser.add_argument('--x-data-in', default=[], action='append', dest='xdata_in', type=str, help='Add data contain string to exclude list')
-argparser.add_argument('--address', default=[], action='append', type=str, help='Add addresses as input, output and exec to includes list')
-argparser.add_argument('--x-input', default=[], action='append', type=str, dest='xinput', help='Add input (recipient) addresses to excludes list')
-argparser.add_argument('--x-output', default=[], action='append', type=str, dest='xoutput', help='Add output (sender) addresses to excludes list')
-argparser.add_argument('--x-exec', default=[], action='append', type=str, dest='xexec', help='Add exec (contract) addresses to excludes list')
-argparser.add_argument('--x-address', default=[], action='append', type=str, dest='xaddress', help='Add addresses as input, output and exec to excludes list')
-argparser.add_argument('--includes-file', type=str, dest='includes_file', help='Load include rules from file')
-argparser.add_argument('--include-default', dest='include_default', action='store_true', help='Include all transactions by default')
+arg_flags = chainlib.cli.argflag_std_base | chainlib.cli.Flag.CHAIN_SPEC | chainlib.cli.Flag.PROVIDER
+argparser = chainlib.cli.ArgumentParser(arg_flags)
+eth_monitor.cli.process_flags(argparser, 0)
+
 argparser.add_argument('--store-tx-data', dest='store_tx_data', action='store_true', help='Include all transaction data objects by default')
 argparser.add_argument('--store-block-data', dest='store_block_data', action='store_true', help='Include all block data objects by default')
-argparser.add_argument('--address-file', type=str, dest='excludes_file', help='Load exclude rules from file')
 argparser.add_argument('--renderer', type=str, action='append', default=[], help='Python modules to dynamically load for rendering of transaction output')
 argparser.add_argument('--filter', type=str, action='append', help='Add python module to tx filter path')
 argparser.add_argument('--block-filter', type=str, dest='block_filter', action='append', help='Add python module to block filter path')
-argparser.add_argument('--cache-dir', dest='cache_dir', type=str, help='Directory to store tx data')
-argparser.add_argument('--state-dir', dest='state_dir', default=exec_dir, type=str, help='Directory to store sync state')
 argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
-argparser.add_argument('--single', action='store_true', help='Execute a single sync, regardless of previous states')
-argparser.add_argument('--session-id', dest='session_id', type=str, help='Use state from specified session id')
-argparser.add_argument('--backend', type=str, help='State store backend')
 argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
-argparser.add_argument('-v', action='store_true', help='Be verbose')
-argparser.add_argument('-vv', action='store_true', help='Be more verbose')
 argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose')
+
+sync_flags = chainsyncer.cli.SyncFlag.RANGE | chainsyncer.cli.SyncFlag.HEAD
+chainsyncer.cli.process_flags(argparser, sync_flags)
+
 args = argparser.parse_args(sys.argv[1:])
 
 if args.list_backends:
@@ -118,44 +98,28 @@ else:
     elif args.v:
         logg.setLevel(logging.INFO)
 
-config_dir = args.c
-config = confini.Config(base_config_dir, os.environ.get('CONFINI_ENV_PREFIX'), override_dirs=args.c)
-config.process()
-args_override = {
-        'CHAIN_SPEC': getattr(args, 'i'),
-        'SYNCER_BACKEND': getattr(args, 'backend'),
-        }
-config.dict_override(args_override, 'cli')
-config.add(args.offset, '_SYNC_OFFSET', True)
-config.add(args.skip_history, '_NO_HISTORY', True)
-config.add(args.single, '_SINGLE', True)
-config.add(args.head, '_HEAD', True)
-config.add(args.keep_alive, '_KEEP_ALIVE', True)
-config.add(os.path.realpath(args.state_dir), '_STATE_DIR', True)
-config.add(args.cache_dir, '_CACHE_DIR', True)
-config.add(args.session_id, '_SESSION_ID', True)
-override(config, 'renderer', env=os.environ, args=args)
-override(config, 'filter', env=os.environ, args=args)
-override(config, 'block_filter', env=os.environ, args=args)
+base_config_dir = [
+    chainsyncer.cli.config_dir,
+    config_dir,
+        ]
+config = chainlib.cli.Config.from_args(args, arg_flags, base_config_dir=base_config_dir)
+config = chainsyncer.cli.process_config(config, args, sync_flags)
+config = eth_monitor.cli.process_config(config, args, 0)
 
-if config.get('_SESSION_ID') == None:
-    if config.get('_SINGLE'):
-        config.add(str(uuid.uuid4()), '_SESSION_ID', True)
-    else:
-        config.add('default', '_SESSION_ID', True)
-logg.debug('loaded config:\n{}'.format(config))
 
-chain_spec = ChainSpec.from_chain_str(args.i)
+settings = EthMonitorSettings()
+settings.process(config)
+logg.debug('loaded settings:\n{}'.format(settings))
 
-rpc_id_generator = None
-if args.seq:
-    rpc_id_generator = IntSequenceGenerator()
+#rpc_id_generator = None
+#if args.seq:
+#    rpc_id_generator = IntSequenceGenerator()
 
-auth = None
-if os.environ.get('RPC_AUTHENTICATION') == 'basic':
-    from chainlib.auth import BasicAuth
-    auth = BasicAuth(os.environ['RPC_USERNAME'], os.environ['RPC_PASSWORD'])
-rpc = EthHTTPConnection(args.p)
+#auth = None
+#if os.environ.get('RPC_AUTHENTICATION') == 'basic':
+#    from chainlib.auth import BasicAuth
+#    auth = BasicAuth(os.environ['RPC_USERNAME'], os.environ['RPC_PASSWORD'])
+#rpc = EthHTTPConnection(args.p)
 
 
 def setup_address_arg_rules(rules, args):
@@ -322,6 +286,7 @@ def filter_change_callback(k, old_state, new_state):
 
 
 def main():
+    rpc = settings.get('RPC')
     o = block_latest()
     r = rpc.do(o)
     block_offset = int(strip_0x(r), 16) + 1
@@ -367,7 +332,7 @@ def main():
             )
 
     store = setup_filter(
-            chain_spec,
+            settings.get('CHAIN_SPEC'),
             config.get('_CACHE_DIR'),
             bool(args.store_tx_data),
             bool(args.store_block_data),
@@ -401,35 +366,19 @@ def main():
 
     chain_interface = EthChainInterface()
 
-    out_filter = OutFilter(chain_spec, rules_filter=address_rules, renderers=renderers_mods)
+    out_filter = OutFilter(
+            settings.get('CHAIN_SPEC'),
+            rules_filter=address_rules,renderers=renderers_mods,
+            )
     filters.append(out_filter)
 
-    syncer_store_module = None
-    syncer_store_class = None
-    state_dir = None
-    if config.get('SYNCER_BACKEND') == 'mem':
-        syncer_store_module = importlib.import_module('chainsyncer.store.mem')
-        syncer_store_class = getattr(syncer_store_module, 'SyncMemStore')
-    else:
-        if config.get('SYNCER_BACKEND') == 'fs': 
-            syncer_store_module = importlib.import_module('chainsyncer.store.fs')
-            syncer_store_class = getattr(syncer_store_module, 'SyncFsStore')
-        elif config.get('SYNCER_BACKEND') == 'rocksdb':
-            syncer_store_module = importlib.import_module('chainsyncer.store.rocksdb')
-            syncer_store_class = getattr(syncer_store_module, 'SyncRocksDbStore')
-        else:
-            syncer_store_module = importlib.import_module(config.get('SYNCER_BACKEND'))
-            syncer_store_class = getattr(syncer_store_module, 'SyncStore')
-        state_dir = os.path.join(config.get('_STATE_DIR'), config.get('SYNCER_BACKEND'))
+    #if state_dir == None:
+    #    sync_store = syncer_store_class(session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
+    #else:
+    #sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
+    logg.info('session is {}'.format(settings.get('SESSION_ID')))
 
-    logg.info('using engine {} module {}.{}'.format(config.get('SYNCER_BACKEND'), syncer_store_module.__file__, syncer_store_class.__name__))
-
-    state_dir = os.path.join(state_dir, config.get('_SESSION_ID'))
-    if state_dir == None:
-        sync_store = syncer_store_class(session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
-    else:
-        sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
-    logg.info('session is {}'.format(sync_store.session_id))
+    sys.exit(0)
 
     for fltr in filters:
         sync_store.register(fltr)
