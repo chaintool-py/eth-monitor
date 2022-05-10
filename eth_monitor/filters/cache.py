@@ -9,6 +9,12 @@ logg = logging.getLogger(__name__)
 
 class Filter(RuledFilter):
 
+    def __init__(self, store, rules_filter=None, include_tx_data=False):
+        super(Filter, self).__init__(rules_filter=rules_filter)
+        self.store = store
+        self.include_tx_data = include_tx_data
+
+
     def ruled_filter(self, conn, block, tx, db_session=None):
         self.store.put_tx(tx, include_data=self.include_tx_data)
 

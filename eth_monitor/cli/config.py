@@ -38,6 +38,9 @@ def process_config(config, args, flags):
 
     arg_override['ETHMONITOR_STATE_DIR'] = getattr(args, 'state_dir')
 
+    arg_override['ETHCACHE_STORE_BLOCK'] = getattr(args, 'store_block_data')
+    arg_override['ETHCACHE_STORE_TX'] = getattr(args, 'store_tx_data')
+
     config.dict_override(arg_override, 'local cli args')
 
     for rules_arg in rules_args:
@@ -49,5 +52,6 @@ def process_config(config, args, flags):
 
     config.add(getattr(args, 'session_id'), '_SESSION_ID', False)
     config.add(getattr(args, 'cache_dir'), '_CACHE_DIR', False)
+    config.add(getattr(args, 'fresh'), '_FRESH', False)
 
     return config

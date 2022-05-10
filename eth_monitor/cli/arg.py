@@ -26,3 +26,7 @@ def process_flags(argparser, flags):
     argparser.add_argument('--filter', type=str, action='append', help='Add python module to tx filter path')
     argparser.add_argument('--block-filter', type=str, dest='block_filter', action='append', help='Add python module to block filter path')
 
+    # cache flags
+    argparser.add_argument('--store-tx-data', action='store_true', dest='store_tx_data', help='Store tx data in cache store')
+    argparser.add_argument('--store-block-data', action='store_true', dest='store_block_data', help='Store block data in cache store')
+    argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')

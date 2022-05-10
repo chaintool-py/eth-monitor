@@ -35,5 +35,5 @@ def post_callback():
     logg.debug('ending sync loop iteration')
 
 
-
-
+def block_callback(block, tx):
+    logg.info('processing {} {}'.format(block, datetime.datetime.fromtimestamp(block.timestamp)))
