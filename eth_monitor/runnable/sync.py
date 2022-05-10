@@ -122,31 +122,6 @@ logg.debug('loaded settings:\n{}'.format(settings))
 #rpc = EthHTTPConnection(args.p)
 
 
-def setup_address_arg_rules(rules, args):
-    include_inputs = args.input
-    include_outputs = args.output
-    include_exec = args.exec
-    exclude_inputs = args.xinput
-    exclude_outputs = args.xoutput
-    exclude_exec = args.xexec
-
-    for address in args.address:
-        include_inputs.append(address)
-        include_outputs.append(address)
-        include_exec.append(address)
-
-    for address in args.xaddress:
-        exclude_inputs.append(address)
-        exclude_outputs.append(address)
-        exclude_exec.append(address)
-
-    includes = RuleSimple(include_outputs, include_inputs, include_exec, description='INCLUDE')
-    rules.include(includes)
-
-    excludes = RuleSimple(exclude_outputs, exclude_inputs, exclude_exec, description='EXCLUDE')
-    rules.exclude(excludes)
-
-    return rules
 
 
 def setup_data_arg_rules(rules, args):
@@ -316,7 +291,9 @@ def main():
         if block_limit == 0:
             block_limit = block_offset
 
-    address_rules = AddressRules(include_by_default=args.include_default)
+    sys.exit(0)
+
+    #address_rules = AddressRules(include_by_default=args.include_default)
     address_rules = setup_data_arg_rules(
             address_rules,
             args,
@@ -372,13 +349,7 @@ def main():
             )
     filters.append(out_filter)
 
-    #if state_dir == None:
-    #    sync_store = syncer_store_class(session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
-    #else:
-    #sync_store = syncer_store_class(state_dir, session_id=config.get('_SESSION_ID'), state_event_callback=state_change_callback, filter_state_event_callback=filter_change_callback)
     logg.info('session is {}'.format(settings.get('SESSION_ID')))
-
-    sys.exit(0)
 
     for fltr in filters:
         sync_store.register(fltr)
