@@ -22,28 +22,41 @@ from hexathon import (
 #from chainsyncer.store.fs import SyncFsStore
 from chainsyncer.driver.chain_interface import ChainInterfaceDriver
 from chainsyncer.error import SyncDone
+from chainsyncer.data import config_dir as chainsyncer_config_dir
+from chainlib.settings import ChainSettings
+from chainlib.eth.settings import process_settings
+from chainlib.eth.cli.arg import (
+        Arg,
+        ArgFlag,
+        process_args,
+        )
+from chainlib.eth.cli.config import (
+        Config,
+        process_config,
+        )
 
 # local imports
 from eth_monitor.callback import (
         pre_callback,
         post_callback,
         )
-from eth_monitor.settings import EthMonitorSettings
 import eth_monitor.cli
+from eth_monitor.cli.log import process_log
+from eth_monitor.settings import process_settings as process_settings_local
 
-logging.STATETRACE = 5
-logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
 script_dir = os.path.realpath(os.path.dirname(__file__))
 config_dir = os.path.join(script_dir, '..', 'data', 'config')
 
-arg_flags = chainlib.cli.argflag_std_base | chainlib.cli.Flag.CHAIN_SPEC | chainlib.cli.Flag.PROVIDER
-argparser = chainlib.cli.ArgumentParser(arg_flags)
-eth_monitor.cli.process_flags(argparser, 0)
+arg_flags = ArgFlag()
+arg = Arg(arg_flags)
+flags = arg_flags.STD_BASE_READ | arg_flags.PROVIDER | arg_flags.CHAIN_SPEC | arg_flags.VERYVERBOSE
 
+argparser = chainlib.eth.cli.ArgumentParser()
 argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
-argparser.add_argument('-vvv', action='store_true', help='Be incredibly verbose')
+argparser = process_args(argparser, arg, flags)
+eth_monitor.cli.process_args(argparser, arg, flags)
 
 sync_flags = chainsyncer.cli.SyncFlag.RANGE | chainsyncer.cli.SyncFlag.HEAD
 chainsyncer.cli.process_flags(argparser, sync_flags)
@@ -59,29 +72,23 @@ if args.list_backends:
         print(v)
     sys.exit(0)
 
-logging.getLogger('chainlib.connection').setLevel(logging.WARNING)
-logging.getLogger('chainlib.eth.tx').setLevel(logging.WARNING)
-logging.getLogger('chainlib.eth.src').setLevel(logging.WARNING)
-
-if args.vvv:
-    logg.setLevel(logging.STATETRACE)
-else:
-    if args.vv:
-        logg.setLevel(logging.DEBUG)
-    elif args.v:
-        logg.setLevel(logging.INFO)
+logg = process_log(args, logg)
 
 base_config_dir = [
     chainsyncer.cli.config_dir,
     config_dir,
         ]
-config = chainlib.cli.Config.from_args(args, arg_flags, base_config_dir=base_config_dir)
+config = Config()
+config.add_schema_dir(config_dir)
+config.add_schema_dir(chainsyncer_config_dir)
+config = process_config(config, arg, args, flags)
 config = chainsyncer.cli.process_config(config, args, sync_flags)
-config = eth_monitor.cli.process_config(config, args, 0)
+config = eth_monitor.cli.process_config(config, args, flags)
 
 
-settings = EthMonitorSettings()
-settings.process(config)
+settings = ChainSettings()
+settings = process_settings(settings, config)
+settings = process_settings_local(settings, config)
 logg.debug('loaded settings:\n{}'.format(settings))
 
 
@@ -99,7 +106,7 @@ def main():
             )
     
     try:
-        r = drv.run(settings.get('RPC'))
+        r = drv.run(settings.get('CONN'))
     except SyncDone as e:
         sys.stderr.write("sync {} done at block {}\n".format(drv, e))
 

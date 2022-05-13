@@ -1,4 +1,4 @@
-def process_flags(argparser, flags):
+def process_args(argparser, args, flags):
     # session flags
     argparser.add_argument('--state-dir', dest='state_dir', type=str, help='Directory to store sync state')
     argparser.add_argument('--session-id', dest='session_id', type=str, help='Use state from specified session id')
