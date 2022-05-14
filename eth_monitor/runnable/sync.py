@@ -19,7 +19,11 @@ from hexathon import (
         strip_0x,
         add_0x,
         )
-#from chainsyncer.store.fs import SyncFsStore
+from chainsyncer.cli.arg import (
+        apply_arg as apply_arg_sync,
+        apply_flag as apply_flag_sync,
+        )
+from chainsyncer.cli.config import process_config as process_config_sync
 from chainsyncer.driver.chain_interface import ChainInterfaceDriver
 from chainsyncer.error import SyncDone
 from chainsyncer.data import config_dir as chainsyncer_config_dir
@@ -50,16 +54,17 @@ script_dir = os.path.realpath(os.path.dirname(__file__))
 config_dir = os.path.join(script_dir, '..', 'data', 'config')
 
 arg_flags = ArgFlag()
+arg_flags = apply_flag_sync(arg_flags)
+
 arg = Arg(arg_flags)
-flags = arg_flags.STD_BASE_READ | arg_flags.PROVIDER | arg_flags.CHAIN_SPEC | arg_flags.VERYVERBOSE
+arg = apply_arg_sync(arg)
 
+
+flags = arg_flags.STD_BASE_READ | arg_flags.PROVIDER | arg_flags.CHAIN_SPEC | arg_flags.VERYVERBOSE | arg_flags.SYNC_RANGE_EXT | arg_flags.STATE
 argparser = chainlib.eth.cli.ArgumentParser()
-argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
 argparser = process_args(argparser, arg, flags)
+argparser.add_argument('--list-backends', dest='list_backends', action='store_true', help='List built-in store backends')
 eth_monitor.cli.process_args(argparser, arg, flags)
-
-sync_flags = chainsyncer.cli.SyncFlag.RANGE | chainsyncer.cli.SyncFlag.HEAD
-chainsyncer.cli.process_flags(argparser, sync_flags)
 
 args = argparser.parse_args(sys.argv[1:])
 
@@ -74,17 +79,12 @@ if args.list_backends:
 
 logg = process_log(args, logg)
 
-base_config_dir = [
-    chainsyncer.cli.config_dir,
-    config_dir,
-        ]
 config = Config()
 config.add_schema_dir(config_dir)
 config.add_schema_dir(chainsyncer_config_dir)
 config = process_config(config, arg, args, flags)
-config = chainsyncer.cli.process_config(config, args, sync_flags)
-config = eth_monitor.cli.process_config(config, args, flags)
-
+config = process_config_sync(config, arg, args, flags)
+config = eth_monitor.cli.process_config(config, arg, args, flags)
 
 settings = ChainSettings()
 settings = process_settings(settings, config)

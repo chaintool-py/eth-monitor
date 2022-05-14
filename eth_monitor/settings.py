@@ -13,6 +13,7 @@ from eth_monitor.chain import EthChainInterface
 from chainlib.eth.address import is_address
 from eth_cache.rpc import CacheRPC
 from eth_cache.store.file import FileStore
+from chainsyncer.settings import process_sync_range
 
 
 # local imports
@@ -341,10 +342,14 @@ def process_sync_interface(settings, config):
 
 
 def process_sync(settings, config):
-    settings = process_sync_interface(settings, config)
-    settings = process_sync_backend(settings, config)
+    settings.set('SYNCER_INTERFACE', EthChainInterface())
     settings = process_sync_range(settings, config)
     return settings
+#def process_sync(settings, config):
+#    settings = process_sync_interface(settings, config)
+#    settings = process_sync_backend(settings, config)
+#    settings = process_sync_range(settings, config)
+#    return settings
 
 
 def process_cache(settings, config):

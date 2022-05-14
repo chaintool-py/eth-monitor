@@ -5,7 +5,7 @@ from .rules import (
         to_config_names,
         )
 
-def process_config(config, args, flags):
+def process_config(config, arg, args, flags):
     arg_override = {}
 
     rules_args = rules_address_args + rules_data_args
