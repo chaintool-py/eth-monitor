@@ -53,11 +53,18 @@ def process_monitor_session(settings, config):
 def process_monitor_session_dir(settings, config):
     syncer_store_module = None
     syncer_store_class = None
+    sync_store = None
     session_id = settings.get('SESSION_ID')
     state_dir = None
     if config.get('SYNCER_BACKEND') == 'mem':
         syncer_store_module = importlib.import_module('chainsyncer.store.mem')
         syncer_store_class = getattr(syncer_store_module, 'SyncMemStore')
+        sync_store = syncer_store_class(
+            session_id=session_id,
+            state_event_callback=state_change_callback,
+            filter_state_event_callback=filter_change_callback,
+            )
+
     else:
         if config.get('SYNCER_BACKEND') == 'fs': 
             syncer_store_module = importlib.import_module('chainsyncer.store.fs')
@@ -70,18 +77,18 @@ def process_monitor_session_dir(settings, config):
             syncer_store_class = getattr(syncer_store_module, 'SyncStore')
         state_dir = os.path.join(config.get('ETHMONITOR_STATE_DIR'), config.get('SYNCER_BACKEND'))
         os.makedirs(state_dir, exist_ok=True)
+        session_dir = os.path.join(state_dir, session_id)
+        sync_store = syncer_store_class(
+                session_dir,
+                session_id=session_id,
+                state_event_callback=state_change_callback,
+                filter_state_event_callback=filter_change_callback,
+                )
+        settings.set('SESSION_DIR', session_dir)
+
     logg.info('using engine {} module {}.{}'.format(config.get('SYNCER_BACKEND'), syncer_store_module.__file__, syncer_store_class.__name__))
 
-    session_dir = os.path.join(state_dir, session_id)
-    sync_store = syncer_store_class(
-            session_dir,
-            session_id=session_id,
-            state_event_callback=state_change_callback,
-            filter_state_event_callback=filter_change_callback,
-            )
-
     settings.set('STATE_DIR', state_dir)
-    settings.set('SESSION_DIR', session_dir)
     settings.set('SYNC_STORE', sync_store)
 
     return settings
