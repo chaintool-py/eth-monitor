@@ -1,3 +1,6 @@
+- 0.5.1
+	* Remove useless need to add session dir for mem backend
+	* Reenable renderers and filters specified through args in new settings setup
 - 0.5.0
 	* Implement on chainlib 0.3.0
 - 0.4.8

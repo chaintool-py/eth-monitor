@@ -315,6 +315,15 @@ def process_out_filter(settings, config):
     return settings
 
 
+def process_arg_filter(settings, config):
+    store = settings.get('SYNC_STORE')
+    for k in config.get('ETHMONITOR_FILTER'):
+        m = importlib.import_module(k)
+        fltr = m.Filter()
+        store.register(fltr)
+    return settings
+
+
 def process_filter(settings, config):
     settings.set('FILTER', [])
     settings = process_renderer(settings, config)
@@ -322,12 +331,13 @@ def process_filter(settings, config):
     settings = process_cache_filter(settings, config)
     settings = process_tx_filter(settings, config)
     settings = process_out_filter(settings, config)
+    settings = process_arg_filter(settings, config)
     return settings
 
 
 def process_renderer(settings, config):
     renderers_mods = []
-    for renderer in list_from_prefix(config, 'renderer'):
+    for renderer in config.get('ETHMONITOR_RENDERER'):
         m = importlib.import_module(renderer)
         renderers_mods.append(m)
         logg.info('using renderer module {}'.format(renderer))
