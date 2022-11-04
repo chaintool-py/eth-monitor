@@ -317,10 +317,11 @@ def process_out_filter(settings, config):
 
 def process_arg_filter(settings, config):
     store = settings.get('SYNC_STORE')
-    for k in config.get('ETHMONITOR_FILTER'):
-        m = importlib.import_module(k)
-        fltr = m.Filter()
-        store.register(fltr)
+    if config.get('ETHMONITOR_FILTER') != None:
+        for k in config.get('ETHMONITOR_FILTER'):
+            m = importlib.import_module(k)
+            fltr = m.Filter()
+            store.register(fltr)
     return settings
 
 
