@@ -347,9 +347,12 @@ def process_renderer(settings, config):
 
 
 def process_cache_rpc(settings, config):
+    if str(settings.get('CACHE_STORE')) == 'Nullstore':
+        logg.debug('cache store is null, cache rpc proxy will be deactivated')
+        return settings
     if not config.true('_FRESH'):
-        rpc = CacheRPC(settings.get('RPC'), cache_store)
-        settings.set('RPC', rpc)
+        rpc = CacheRPC(settings.get('CONN'), settings.get('CACHE_STORE'))
+        settings.set('CONN', rpc)
     return settings
 
 
@@ -372,6 +375,7 @@ def process_sync(settings, config):
 
 def process_cache(settings, config):
     settings = process_cache_store(settings, config)
+    settings = process_cache_rpc(settings, config)
     return settings
 
 
