@@ -35,7 +35,7 @@ class Importer:
             block = Block(r)
 
             if self.block_callback != None:
-                self.block_callback(block)
+                self.block_callback(None, block)
 
             tx_src = block.txs[int(v['transactionIndex'])]
 

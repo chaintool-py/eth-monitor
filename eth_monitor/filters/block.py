@@ -5,5 +5,5 @@ class Filter:
         self.include_block_data = include_block_data
 
 
-    def filter(self, block, tx=None):
+    def filter(self, conn, block):
         self.store.put_block(block, include_data=self.include_block_data)

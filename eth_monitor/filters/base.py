@@ -16,7 +16,7 @@ class RuledFilter(SyncFilter):
         self.rules_filter = rules_filter
 
 
-    def filter(self, conn, block, tx, db_session=None):
+    def filter(self, conn, block, tx, **kwargs):
         if self.rules_filter != None:
             if not self.rules_filter.apply_rules(tx):
                 logg.debug('rule match failed for tx {}'.format(tx.hash))

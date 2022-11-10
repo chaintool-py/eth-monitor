@@ -16,7 +16,7 @@ logg = logging.getLogger(__name__)
 
 # Interface defining the signature for renderer in OutFilter
 # return string after local transformation
-def apply_interface(c, s, chain_str, conn, block, tx, db_session=None):
+def apply_interface(c, s, chain_str, conn, block, tx, **kwargs):
     pass
 
 
@@ -49,8 +49,8 @@ class OutFilter(RuledFilter):
         self.result = OutResult()
 
 
-    def filter(self, conn, block, tx, db_session=None):
-        r = super(OutFilter, self).filter(conn, block, tx, db_session=db_session)
+    def filter(self, conn, block, tx, **kwargs):
+        r = super(OutFilter, self).filter(conn, block, tx, **kwargs)
         if r == True:
             return True
 
