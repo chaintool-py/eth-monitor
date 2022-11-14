@@ -1,3 +1,11 @@
+- 0.7.1
+	* Change license to AGPL3 and copyright waived to public domain
+	* Add missing log module in cli lib
+- 0.7.0
+	* Reactivate cache rpc
+	* Upgrade dependencies
+- 0.6.0
+	* Allow missing filters in arugments
 - 0.5.1
 	* Remove useless need to add session dir for mem backend
 	* Reenable renderers and filters specified through args in new settings setup
