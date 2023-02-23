@@ -74,7 +74,7 @@ class OutFilter(RuledFilter):
                     datetime.datetime.fromtimestamp(block.timestamp),
                     block.number,
                     strip_0x(block.hash),
-                    tx.index,
+                    tx.index + 1,
                     tx_count,
                     strip_0x(tx.hash),
                     tx.status.name,
