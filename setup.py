@@ -21,8 +21,13 @@ while True:
     test_requirements.append(l.rstrip())
 f.close()
 
-
+man_dir = 'man/build'
 setup(
         install_requires=requirements,
         tests_require=test_requirements,
+        data_files=[("man/man1", [
+                os.path.join(man_dir, 'eth-monitor.1'),
+                os.path.join(man_dir, 'eth-monitor-sync.1'),
+            ]
+             )],
     )
