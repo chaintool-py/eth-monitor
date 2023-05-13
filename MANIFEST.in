@@ -1,1 +1,1 @@
-include *requirements.txt LICENSE CHANGELOG WAIVER WAIVER.asc eth_monitor/data/config/* man/build/*.1
+include *requirements.txt LICENSE CHANGELOG WAIVER WAIVER.asc eth_monitor/data/config/* man/build/*.1 README*

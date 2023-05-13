@@ -21,6 +21,10 @@ while True:
     test_requirements.append(l.rstrip())
 f.close()
 
+f = open('README.md', 'r')
+description = f.read()
+f.close()
+
 man_dir = 'man/build'
 setup(
         install_requires=requirements,
@@ -30,4 +34,6 @@ setup(
                 os.path.join(man_dir, 'eth-monitor-sync.1'),
             ]
              )],
+        long_description=description,
+        long_description_content_type='text/markdown',
     )
