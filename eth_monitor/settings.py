@@ -357,13 +357,14 @@ def process_cache_rpc(settings, config):
 
 
 def process_sync_interface(settings, config):
-    ifc = EthChainInterface()
+    ifc = EthChainInterface(dialect=settings.get('RPC_DIALECT_FILTER'))
     settings.set('SYNCER_INTERFACE', ifc)
     return settings
 
 
 def process_sync(settings, config):
-    settings.set('SYNCER_INTERFACE', EthChainInterface())
+    dialect_filter = settings.get('RPC_DIALECT_FILTER')
+    settings.set('SYNCER_INTERFACE', EthChainInterface(dialect_filter=dialect_filter))
     settings = process_sync_range(settings, config)
     return settings
 #def process_sync(settings, config):

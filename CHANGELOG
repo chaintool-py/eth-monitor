@@ -1,3 +1,5 @@
+- 0.7.6
+	* Make rpc dialect work with chain interface
 - 0.7.5
 	* Add readme (from man page)
 	* Add package descriptino (from man page)
