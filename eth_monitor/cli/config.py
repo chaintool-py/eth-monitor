@@ -38,6 +38,8 @@ def process_config(config, arg, args, flags):
 
     arg_override['ETHMONITOR_STATE_DIR'] = getattr(args, 'state_dir')
 
+    arg_override['ETHMONITOR_CONTEXT_KEY'] = getattr(args, 'context_key')
+
     arg_override['ETHCACHE_STORE_BLOCK'] = getattr(args, 'store_block_data')
     arg_override['ETHCACHE_STORE_TX'] = getattr(args, 'store_tx_data')
 

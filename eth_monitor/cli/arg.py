@@ -30,3 +30,6 @@ def process_args(argparser, args, flags):
     argparser.add_argument('--store-tx-data', action='store_true', dest='store_tx_data', help='Store tx data in cache store')
     argparser.add_argument('--store-block-data', action='store_true', dest='store_block_data', help='Store block data in cache store')
     argparser.add_argument('--fresh', action='store_true', help='Do not read block and tx data from cache, even if available')
+
+    # misc flags
+    argparser.add_argument('-k', '--context-key', dest='context_key', action='append', type=str, help='Add a key-value pair to be added to the context')

@@ -380,11 +380,25 @@ def process_cache(settings, config):
     return settings
 
 
+def process_user_context(settings, config):
+    ctx_usr = {}
+    for kv in config.get('ETHMONITOR_CONTEXT_KEY'):
+        (k, v) = kv.split('=', 1)
+        ctx_usr[k] = v
+    ctx = {
+        'driver': 'eth-monitor',
+        'usr': ctx_usr,
+            }
+    settings.set('SYNCER_CONTEXT', ctx)
+    return settings
+
+
 def process_settings(settings, config):
     settings = process_monitor_session(settings, config)
     settings = process_monitor_session_dir(settings, config)
     settings = process_arg_rules(settings, config)
     settings = process_sync(settings, config)
     settings = process_cache(settings, config)
+    settings = process_user_context(settings, config)
     settings = process_filter(settings, config)
     return settings

@@ -85,6 +85,7 @@ config.add_schema_dir(chainsyncer_config_dir)
 config = process_config(config, arg, args, flags)
 config = process_config_sync(config, arg, args, flags)
 config = eth_monitor.cli.process_config(config, arg, args, flags)
+logg.debug('loaded config:\n{}'.format(config))
 
 settings = ChainSettings()
 settings = process_settings(settings, config)
@@ -95,6 +96,7 @@ logg.debug('loaded settings:\n{}'.format(settings))
 def main():
     logg.info('session is {}'.format(settings.get('SESSION_ID')))
 
+
     drv = ChainInterfaceDriver(
             settings.get('SYNC_STORE'),
             settings.get('SYNCER_INTERFACE'),
@@ -104,9 +106,9 @@ def main():
             post_callback=post_callback,
             block_callback=settings.get('BLOCK_HANDLER').filter,
             )
-    
+   
     try:
-        r = drv.run(settings.get('CONN'))
+        r = drv.run(settings.get('CONN'), ctx=settings.get('SYNCER_CONTEXT'))
     except SyncDone as e:
         sys.stderr.write("sync {} done at block {}\n".format(drv, e))
 

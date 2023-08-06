@@ -1,3 +1,6 @@
+- 0.8.1
+	* Implement syncer context
+	* Add key-value parameter for cli, environment, config to pass to syncer context
 - 0.8.0
 	* Implement RPC batch limits for syncer
 - 0.7.6
