@@ -96,7 +96,6 @@ logg.debug('loaded settings:\n{}'.format(settings))
 def main():
     logg.info('session is {}'.format(settings.get('SESSION_ID')))
 
-
     drv = ChainInterfaceDriver(
             settings.get('SYNC_STORE'),
             settings.get('SYNCER_INTERFACE'),

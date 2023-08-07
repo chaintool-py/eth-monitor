@@ -1,3 +1,5 @@
+- 0.8.2
+	* Handle undefined content-key argument
 - 0.8.1
 	* Implement syncer context
 	* Add key-value parameter for cli, environment, config to pass to syncer context

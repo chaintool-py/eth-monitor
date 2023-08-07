@@ -382,9 +382,11 @@ def process_cache(settings, config):
 
 def process_user_context(settings, config):
     ctx_usr = {}
-    for kv in config.get('ETHMONITOR_CONTEXT_KEY'):
-        (k, v) = kv.split('=', 1)
-        ctx_usr[k] = v
+    ks = config.get('ETHMONITOR_CONTEXT_KEY')
+    if ks != None:
+        for kv in ks:
+            (k, v) = kv.split('=', 1)
+            ctx_usr[k] = v
     ctx = {
         'driver': 'eth-monitor',
         'usr': ctx_usr,
