@@ -1,0 +1,276 @@
+.TH eth-monitor 1
+
+.SH NAME
+eth-monitor \- Cache, index and monitor transactions with an EVM node rpc
+
+.SH SYNOPSIS
+.SY eth-monitor
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --includes-file \fIfile\fP ] [ -i chain_spec ] 
+.YS
+.SY eth-monitor
+[ --skip-history ] [ --single ] [ p \fIeth_provider\fP ] [ --excludes-file \fIfile\fP ] [ --include-default ] [ -i chain_spec ] 
+.YS
+
+
+.SH DESCRIPTION
+The \fBeth-monitor\fP has fulfills three distinct but related functions:
+.IP
+1. A customizable view of on transactions of interest.
+.IP
+2. A block and transaction cache.
+.IP
+3. Arbitrary code executions using a transaction (and its block) as input.
+
+.P
+Using an EVM RPC endpoint, the \fBeth-monitor\fP tool will retrieve blocks within a given range and provides arbitrary processing of each transaction.
+.P
+A collection of options is provided to control the behavior of which block ranges to sync, which criteria to use for display and cache, and what code to execute for matching transactions. Details on each topic can be found in the \fBSYNCING\fP, \fBMATCHING ADDRESSES\fP and \fBDEFINING FILTERS\fP sections below, respectively.
+.P
+Example executions of the tool can be found in the \fBEXAMPLES\fP section.
+.P
+
+
+.SS OPTIONS
+
+.TP
+\fB-0\fP
+Omit newline to output
+
+.TP
+\fB--address \fI\fIaddress
+\fP\fP
+Add an address of interest to match any role. Complements \fB--address-file\fP.
+
+.TP
+\fB-c \fI\fIconfig_dir\fP\fP, \fB--config \fI\fIconfig_dir\fP\fP
+Load configuration files from given directory. All files with an .ini extension will be loaded, of which all must contain valid ini file data.
+
+.TP
+\fB--context-key \fI\fIkey=value
+\fP\fP
+Add a key-value pair that gets passed to the syncer context. May be specified several times.
+
+.TP
+\fB--dumpconfig \fI\fIformat\fP\fP
+Output configuration settings rendered from environment and inputs. Valid arguments are \fIini\fP for ini file output, and \fIenv\fP for environment variable output. See \fBCONFIGURATION\fP.
+
+.TP
+\fB--env-prefix\fP
+Environment prefix for variables to overwrite configuration. Example: If \fB--env-prefix\fP is set to \fBFOO\fP then configuration variable \fBBAR_BAZ\fP would be set by environment variable \fBFOO_BAZ_BAR\fP. Also see \fBENVIRONMENT\fP.
+
+.TP
+\fB--excludes-file \fI\fIfile
+\fP\fP
+Load address exclude matching rules from file. See \fBMATCHING ADDRESSES\fP.
+
+.TP
+\fB--exec \fI\fIaddress
+\fP\fP
+Add an address of interest to executable address array. Complements \fB--address-file\fP.
+
+.TP
+\fB--filter \fI\fImodule
+\fP\fP
+Add code execution filter to all matched transactions. The argument must be a python module path. Several filters may be added by supplying the option multiple times. Filters will be executed in the order the options are given. See \fBDEFINING FILTERS\fP section of \fBeth-monitor (1)\fP for more details.
+
+.TP
+\fB--height\fP
+Block height at which to query state for. Does not apply to transactions.
+
+.TP
+\fB-i \fI\fIchain_spec\fP\fP, \fB--chain-spec \fI\fIchain_spec\fP\fP
+Chain specification string, in the format <engine>:<fork>:<chain_id>:<common_name>. Example: "evm:london:1:ethereum". Overrides the \fIRPC_CREDENTIALS\fP configuration setting.
+
+.TP
+\fB--include-default \fI\fI
+\fP\fP
+Match all addresses by default. Addresses may be excluded using --excludes-file. If this is set, --input, --output, --exec and --includes-file will have no effect.
+
+.TP
+\fB--includes-file \fI\fIfile
+\fP\fP
+Load address include matching rules from file. See \fBMATCHING ADDRESSES\fP.
+
+.TP
+\fB--input \fI\fIaddress
+\fP\fP
+Add an address of interest to inputs (recipients) array. Complements \fB--address-file\fP.
+
+.TP
+\fB-n \fI\fInamespace\fP\fP, \fB--namespace \fI\fInamespace\fP\fP
+Load given configuration namespace. Configuration will be loaded from the immediate configuration subdirectory with the same name.
+
+.TP
+\fB--no-logs\fP
+Turn of logging completely. Negates \fB-v\fP and \fB-vv\fP
+
+.TP
+\fB--output \fI\fIaddress
+\fP\fP
+Add an address of interest to outputs (sender) array. Complements \fB--address-file\fP.
+
+.TP
+\fB-p\fP, \fB--rpc-provider\fP
+Fully-qualified URL of RPC provider. Overrides the \fIRPC_PROVIDER\fP configuration setting.
+
+.TP
+\fB--raw\fP
+Produce output most optimized for machines.
+
+.TP
+\fB--renderer \fI\fImodule
+\fP\fP
+Add output renderer filter to all matched transactions. The argument must be a python module path. Several renderers may be added by supplying the option multiple times. See \fBRENDERERS\fP section of \fBeth-monitor (1)\fP for more details.
+
+.TP
+\fB--rpc-batch-limit\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together. Overrides the \fIRPC_BATCH_LIMIT\fP configuration setting.
+
+.TP
+\fB--rpc-dialect\fP
+RPC backend dialect. If specified it \fImay\fP help with encoding and decoding issues. Overrides the \fIRPC_DIALECT\fP configuration setting.
+
+.TP
+\fB--store-block-data \fI\fI
+\fP\fP
+Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.
+
+.TP
+\fB--store-tx-data \fI\fI
+\fP\fP
+Store transaction data in cache for matching transactions. Requires \fB--cache-dir\fP.
+
+.TP
+\fB-u\fP, \fB--unsafe\fP
+Allow addresses that do not pass checksum.
+
+.TP
+\fB-v\fP
+Verbose. Show logs for important state changes.
+
+.TP
+\fB-vv\fP
+Very verbose. Show logs with debugging information.
+
+.TP
+\fB--x-address \fI\fIaddress
+\fP\fP
+Add an address of interest to match any role.
+
+.TP
+\fB--x-exec \fI\fIaddress
+\fP\fP
+Add an address of disinterest to executable address array.
+
+.TP
+\fB--x-input \fI\fIaddress
+\fP\fP
+Add an address of disinterest to inputs (recipients) array.
+
+.TP
+\fB--x-output \fI\fIaddress
+\fP\fP
+Add an address of disinterest to outputs (sender) array.
+
+.SH CONFIGURATION
+
+All configuration settings may be overriden both by environment variables, or by overriding settings with the contents of ini-files in the directory defined by the \fB-c\fP option.
+
+The active configuration, with values assigned from environment and arguments, can be output using the \fB--dumpconfig\fP \fIformat\fP option. Note that entries having keys prefixed with underscore (e.g. _SEQ) are not actual configuration settings, and thus cannot be overridden with environment variables.
+
+To refer to a configuration setting by environment variables, the \fIsection\fP and \fIkey\fP are concatenated together with an underscore, and transformed to upper-case. For example, the configuration variable \fIFOO_BAZ_BAR\fP refers to an ini-file entry as follows:
+
+.EX
+[foo]
+bar_baz = xyzzy
+.EE
+
+In the \fBENVIRONMENT\fP section below, the relevant configuration settings for this tool is listed along with a short description of its meaning.
+
+Some configuration settings may also be overriden by command line options. Also note that the use of the \fB-n\fP and \fB--env-prefix\fP options affect how environment and configuration is read. The effects of options on how configuration settings are affective is described in the respective \fBOPTIONS\fP section.
+
+.SH MATCHING ADDRESSES
+By default, addresses to match against transactions need to be explicitly specified. This behavior can be reversed with the \fB--include-default\fP option. Addresses to match are defined using the \fB--input\fP, \fB--output\fP and \fB--exec\fP options. Addresses specified multiple times will be deduplicated.
+.P
+Inclusion rules may also be loaded from file by specifying the \fB--includes-file\fP and \fB--excludes-file\fP options. Each file must specify the outputs, inputs and exec addresses as comma separated lists respectively, separated by tabs.
+.P
+In the current state of this tool, address matching will affect all parts of the processing; cache, code execution and rendering. 
+
+.SH SYNCING
+When a sync is initiated, the state of this sync is persisted. This way, previous syncs that did not complete for some reason will be resumed where they left off.
+.P
+A special sync type \fB--head\fP starts syncing at the current head of the chain, and continue to sync until interrupted. When resuming sync, a new sync range between the current block head and the block height at which the previous \fB--head\fP sync left off will automatically be created.
+.P
+Syncs can be forced to (re)run for ranges regardless of previous state by using the \fB--single\fP option. However, there is no protection in place from preventing code filters from being executed again on the same transaction when this is done. See \fBDEFINING FILTERS\fP below.
+
+
+.SH CACHE
+When syncing, the hash of a block and transaction matching the address criteria will be stored in the cache. The hashes can be used for future data lookups.
+.P
+If \fB--store-block-data\fP and/or \fB--store-tx-data\fP is set, a copy of the block and/or transaction data will also be stored, respectively.
+
+
+.SH RENDERING
+Rendering in the context of \fBeth-monitor\fP refers to a formatted output stream that occurs independently of caching and code execution.
+.P
+Filters for rendering may be specified by specifying python modules to the \fB--renderer\fP option. This option may be specified multiple times.
+.P
+Rendering filters will be executed in order, and the first filter to return \fIFalse\fP
+
+
+.SH DEFINING FILTERS
+
+Filters will strictly be executed in the order which they are defined on the command line.
+
+A python module used for filter must fulfill two conditions:
+
+.IP
+1. It must provide a class named \fIFilter\fP in the package base namespace.
+.IP
+2. The \fIFilter\fP class must extend the \fIchainsyncer.filter.SyncFilter\fP interface, and at least override the \fIfilter\fP method.
+
+
+.SS SYNCER AND FILTER CONTEXT
+
+Key-value pairs specified with `--context-key` will be passed to the filter's \fIprepare\fP method, aswell as the \fIctx\fP parameter of the \fIfilter\fP method.
+
+
+.SH FURTHER READING
+
+Refer to the \fBchainsyncer\fP chapter n \fIinfo chaintool\fP for in-depth information on the subjects of syncing and filtering.
+.SH ENVIRONMENT
+
+
+.TP
+\fICHAIN_SPEC\fP
+String specifying the type of chain connected to, in the format \fI<engine>:<fork>:<network_id>:<common_name>\fP. For EVM nodes the \fIengine\fP value will always be \fIevm\fP.
+
+.TP
+\fIRPC_BATCH_LIMIT\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together.
+
+.TP
+\fIRPC_DIALECT\fP
+Enables translations of EVM node specific formatting and response codes.
+
+.TP
+\fIRPC_PROVIDER\fP
+Fully-qualified URL to the RPC endpoint of the blockchain node.
+
+.SH LICENSE
+
+This documentation and its source is licensed under the Creative Commons Attribution-Sharealike 4.0 International license.
+
+The source code of the tool this documentation describes is licensed under the GNU General Public License 3.0.
+
+.SH COPYRIGHT
+
+Louis Holbrook <dev@holbrook.no> (https://holbrook.no)
+PGP: 59A844A484AC11253D3A3E9DCDCBD24DD1D0E001
+
+
+
+.SH SOURCE CODE
+
+https://git.defalsify.org
+

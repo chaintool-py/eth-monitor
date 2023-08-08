@@ -1,0 +1,170 @@
+.TH eth-monitor-import	1
+
+
+.SH NAME
+eth-monitor-import \- Import transaction data from an indexing service
+
+
+.SH SYNOPSIS
+.SY eth-monitor-import
+[ -i \fIchain_spec\fP] [ --api-key-file \fIfile\fp ] [ --address-file \fIfile\fP ] [ -a \fIaddress\fP ... ] [ --cache-dir \fIdirectory\fP ] \fIservice\fP
+
+
+.SH DESCRIPTION
+Use an indexing service to retrieve transaction hashes for one or more addresses. Supported services may be listed using the \fB--list-services\fP option.
+.P
+Which addresses to retrieve data for may be defined by the \fB-a\fP \fIaddress\fP option. Alternatively, the \fB--address-file\fP \fIfile\fP option may be used, where addresses are supplied from the given file as a comma-separated list. The address matching mechanism used in transaction processing is the same as for \fBeth-monitor(1)\fP.
+.P
+Only block and transaction hashes are used from the indexing service. The RPC endpoint will be used to retrieve the block and transaction data.
+.P
+If \fB--cache-dir\fP \fIdirectory\fP is defined, data will be cached to the given path using the same caching filter as \fBeth-monitor(1)\fP. \fB--store-tx-data\fP and \fB--store-block-data-\fP define whether also transaction and block data is stored to cache, respectively.
+
+
+.SS OPTIONS
+
+.TP
+\fB-0\fP
+Omit newline to output
+
+.TP
+\fB--address-file \fI\fIfile
+\fP\fP
+Load address include matching rules from file. Addresses must be given as a comma-separated list.
+
+.TP
+\fB-c \fI\fIconfig_dir\fP\fP, \fB--config \fI\fIconfig_dir\fP\fP
+Load configuration files from given directory. All files with an .ini extension will be loaded, of which all must contain valid ini file data.
+
+.TP
+\fB--dumpconfig \fI\fIformat\fP\fP
+Output configuration settings rendered from environment and inputs. Valid arguments are \fIini\fP for ini file output, and \fIenv\fP for environment variable output. See \fBCONFIGURATION\fP.
+
+.TP
+\fB--env-prefix\fP
+Environment prefix for variables to overwrite configuration. Example: If \fB--env-prefix\fP is set to \fBFOO\fP then configuration variable \fBBAR_BAZ\fP would be set by environment variable \fBFOO_BAZ_BAR\fP. Also see \fBENVIRONMENT\fP.
+
+.TP
+\fB--height\fP
+Block height at which to query state for. Does not apply to transactions.
+
+.TP
+\fB-i \fI\fIchain_spec\fP\fP, \fB--chain-spec \fI\fIchain_spec\fP\fP
+Chain specification string, in the format <engine>:<fork>:<chain_id>:<common_name>. Example: "evm:london:1:ethereum". Overrides the \fIRPC_CREDENTIALS\fP configuration setting.
+
+.TP
+\fB--list-services \fI\fI
+\fP\fP
+List all supported services.
+
+.TP
+\fB-n \fI\fInamespace\fP\fP, \fB--namespace \fI\fInamespace\fP\fP
+Load given configuration namespace. Configuration will be loaded from the immediate configuration subdirectory with the same name.
+
+.TP
+\fB--no-logs\fP
+Turn of logging completely. Negates \fB-v\fP and \fB-vv\fP
+
+.TP
+\fB-p\fP, \fB--rpc-provider\fP
+Fully-qualified URL of RPC provider. Overrides the \fIRPC_PROVIDER\fP configuration setting.
+
+.TP
+\fB--raw\fP
+Produce output most optimized for machines.
+
+.TP
+\fB--rpc-batch-limit\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together. Overrides the \fIRPC_BATCH_LIMIT\fP configuration setting.
+
+.TP
+\fB--rpc-dialect\fP
+RPC backend dialect. If specified it \fImay\fP help with encoding and decoding issues. Overrides the \fIRPC_DIALECT\fP configuration setting.
+
+.TP
+\fB--socks-host \fI\fIhost
+\fP\fP
+Connect through the specified socks4a host (e.g. tor)
+
+.TP
+\fB--socks-port \fI\fIport
+\fP\fP
+Connect through the specified socks4a host port (e.g. tor)
+
+.TP
+\fB--store-block-data \fI\fI
+\fP\fP
+Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.
+
+.TP
+\fB--store-tx-data \fI\fI
+\fP\fP
+Store transaction data in cache for matching transactions. Requires \fB--cache-dir\fP.
+
+.TP
+\fB-u\fP, \fB--unsafe\fP
+Allow addresses that do not pass checksum.
+
+.TP
+\fB-v\fP
+Verbose. Show logs for important state changes.
+
+.TP
+\fB-vv\fP
+Very verbose. Show logs with debugging information.
+
+.SH CONFIGURATION
+
+All configuration settings may be overriden both by environment variables, or by overriding settings with the contents of ini-files in the directory defined by the \fB-c\fP option.
+
+The active configuration, with values assigned from environment and arguments, can be output using the \fB--dumpconfig\fP \fIformat\fP option. Note that entries having keys prefixed with underscore (e.g. _SEQ) are not actual configuration settings, and thus cannot be overridden with environment variables.
+
+To refer to a configuration setting by environment variables, the \fIsection\fP and \fIkey\fP are concatenated together with an underscore, and transformed to upper-case. For example, the configuration variable \fIFOO_BAZ_BAR\fP refers to an ini-file entry as follows:
+
+.EX
+[foo]
+bar_baz = xyzzy
+.EE
+
+In the \fBENVIRONMENT\fP section below, the relevant configuration settings for this tool is listed along with a short description of its meaning.
+
+Some configuration settings may also be overriden by command line options. Also note that the use of the \fB-n\fP and \fB--env-prefix\fP options affect how environment and configuration is read. The effects of options on how configuration settings are affective is described in the respective \fBOPTIONS\fP section.
+
+.SH ENVIRONMENT
+
+
+.TP
+\fICHAIN_SPEC\fP
+String specifying the type of chain connected to, in the format \fI<engine>:<fork>:<network_id>:<common_name>\fP. For EVM nodes the \fIengine\fP value will always be \fIevm\fP.
+
+.TP
+\fIRPC_BATCH_LIMIT\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together.
+
+.TP
+\fIRPC_DIALECT\fP
+Enables translations of EVM node specific formatting and response codes.
+
+.TP
+\fIRPC_PROVIDER\fP
+Fully-qualified URL to the RPC endpoint of the blockchain node.
+
+.SH LICENSE
+
+This documentation and its source is licensed under the Creative Commons Attribution-Sharealike 4.0 International license.
+
+The source code of the tool this documentation describes is licensed under the GNU General Public License 3.0.
+
+.SH COPYRIGHT
+
+Louis Holbrook <dev@holbrook.no> (https://holbrook.no)
+PGP: 59A844A484AC11253D3A3E9DCDCBD24DD1D0E001
+
+
+
+.SH SOURCE CODE
+
+https://git.defalsify.org
+
+.SH SEE ALSO
+
+eth-monitor (1)

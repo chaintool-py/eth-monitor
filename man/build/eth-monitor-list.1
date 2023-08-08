@@ -1,0 +1,159 @@
+.TH eth-monitor-list 1
+
+
+.SH NAME
+eth-monitor-list \- Query transactions cache
+
+
+.SH SYNOPSIS
+.SY eth-monitor-list
+[ -i \fIchain_spec\fP ] [ p \fIeth_provider\fP ] [ -a \fIaddress\fP ... ] \fIcache_dir\fP
+.YS
+
+
+.SH DESCRIPTION
+List transactions stored in cache matching the given address.
+.P
+Any block data and/or transaction data matchin the relevant hashes returned by the query will be used to create the output. The \fB--fresh\fP option may be defined to force all block and transaction data from the RPC provider endpoint instead.
+.P
+For details on rendering and filtering, please refer to to \fBeth-monitor (1)\fP man page.
+
+
+.SS OPTIONS
+
+.TP
+\fB-0\fP
+Omit newline to output
+
+.TP
+\fB--address \fI\fIaddress
+\fP\fP
+Add an address of interest to match any role. Complements \fB--address-file\fP.
+
+.TP
+\fB-c \fI\fIconfig_dir\fP\fP, \fB--config \fI\fIconfig_dir\fP\fP
+Load configuration files from given directory. All files with an .ini extension will be loaded, of which all must contain valid ini file data.
+
+.TP
+\fB--dumpconfig \fI\fIformat\fP\fP
+Output configuration settings rendered from environment and inputs. Valid arguments are \fIini\fP for ini file output, and \fIenv\fP for environment variable output. See \fBCONFIGURATION\fP.
+
+.TP
+\fB--env-prefix\fP
+Environment prefix for variables to overwrite configuration. Example: If \fB--env-prefix\fP is set to \fBFOO\fP then configuration variable \fBBAR_BAZ\fP would be set by environment variable \fBFOO_BAZ_BAR\fP. Also see \fBENVIRONMENT\fP.
+
+.TP
+\fB--filter \fI\fImodule
+\fP\fP
+Add code execution filter to all matching transactions. The argument must be a python module path. Several filters may be added by supplying the option multiple times. Filters will be executed in the order the options are given. See \fBDEFINING FILTERS\fP section of \fBeth-monitor (1)\fP for more details.
+
+.TP
+\fB--fresh \fI\fI
+\fP\fP
+Only use hashes from cache, and retrieve all block and transaction data from RPC endpoint.
+
+.TP
+\fB--height\fP
+Block height at which to query state for. Does not apply to transactions.
+
+.TP
+\fB-i \fI\fIchain_spec\fP\fP, \fB--chain-spec \fI\fIchain_spec\fP\fP
+Chain specification string, in the format <engine>:<fork>:<chain_id>:<common_name>. Example: "evm:london:1:ethereum". Overrides the \fIRPC_CREDENTIALS\fP configuration setting.
+
+.TP
+\fB-n \fI\fInamespace\fP\fP, \fB--namespace \fI\fInamespace\fP\fP
+Load given configuration namespace. Configuration will be loaded from the immediate configuration subdirectory with the same name.
+
+.TP
+\fB--no-logs\fP
+Turn of logging completely. Negates \fB-v\fP and \fB-vv\fP
+
+.TP
+\fB-p\fP, \fB--rpc-provider\fP
+Fully-qualified URL of RPC provider. Overrides the \fIRPC_PROVIDER\fP configuration setting.
+
+.TP
+\fB--raw\fP
+Produce output most optimized for machines.
+
+.TP
+\fB--renderer \fI\fImodule
+\fP\fP
+Add output renderer filter to all matching transactions. The argument must be a python module path. Several renderers may be added by supplying the option multiple times. See \fBRENDERERS\fP section of \fBeth-monitor (1)\fP for more details.
+
+.TP
+\fB--rpc-batch-limit\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together. Overrides the \fIRPC_BATCH_LIMIT\fP configuration setting.
+
+.TP
+\fB--rpc-dialect\fP
+RPC backend dialect. If specified it \fImay\fP help with encoding and decoding issues. Overrides the \fIRPC_DIALECT\fP configuration setting.
+
+.TP
+\fB-u\fP, \fB--unsafe\fP
+Allow addresses that do not pass checksum.
+
+.TP
+\fB-v\fP
+Verbose. Show logs for important state changes.
+
+.TP
+\fB-vv\fP
+Very verbose. Show logs with debugging information.
+
+.SH CONFIGURATION
+
+All configuration settings may be overriden both by environment variables, or by overriding settings with the contents of ini-files in the directory defined by the \fB-c\fP option.
+
+The active configuration, with values assigned from environment and arguments, can be output using the \fB--dumpconfig\fP \fIformat\fP option. Note that entries having keys prefixed with underscore (e.g. _SEQ) are not actual configuration settings, and thus cannot be overridden with environment variables.
+
+To refer to a configuration setting by environment variables, the \fIsection\fP and \fIkey\fP are concatenated together with an underscore, and transformed to upper-case. For example, the configuration variable \fIFOO_BAZ_BAR\fP refers to an ini-file entry as follows:
+
+.EX
+[foo]
+bar_baz = xyzzy
+.EE
+
+In the \fBENVIRONMENT\fP section below, the relevant configuration settings for this tool is listed along with a short description of its meaning.
+
+Some configuration settings may also be overriden by command line options. Also note that the use of the \fB-n\fP and \fB--env-prefix\fP options affect how environment and configuration is read. The effects of options on how configuration settings are affective is described in the respective \fBOPTIONS\fP section.
+
+.SH ENVIRONMENT
+
+
+.TP
+\fICHAIN_SPEC\fP
+String specifying the type of chain connected to, in the format \fI<engine>:<fork>:<network_id>:<common_name>\fP. For EVM nodes the \fIengine\fP value will always be \fIevm\fP.
+
+.TP
+\fIRPC_BATCH_LIMIT\fP
+Set number of RPC requests that can be set to the RPC provider as a batch request. This is made available through settings to any request builder implementing batch requests. A value of 1 means no batch will be used. A value of 0 indicates that the limit is not relevant. Any other positive value signals the maximum number of requests to be batched together.
+
+.TP
+\fIRPC_DIALECT\fP
+Enables translations of EVM node specific formatting and response codes.
+
+.TP
+\fIRPC_PROVIDER\fP
+Fully-qualified URL to the RPC endpoint of the blockchain node.
+
+.SH LICENSE
+
+This documentation and its source is licensed under the Creative Commons Attribution-Sharealike 4.0 International license.
+
+The source code of the tool this documentation describes is licensed under the GNU General Public License 3.0.
+
+.SH COPYRIGHT
+
+Louis Holbrook <dev@holbrook.no> (https://holbrook.no)
+PGP: 59A844A484AC11253D3A3E9DCDCBD24DD1D0E001
+
+
+
+.SH SOURCE CODE
+
+https://git.defalsify.org
+
+.SH SEE ALSO
+
+eth-monitor (1)
