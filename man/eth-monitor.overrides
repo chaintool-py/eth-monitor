@@ -13,3 +13,4 @@ storetx	Store transaction data in cache for matching transactions. Requires \fB-
 storeblock	Store block data in cache for matching transactions. Requires \fB--cache-dir\fP.	--store-block-data	
 renderer	Add output renderer filter to all matched transactions. The argument must be a python module path. Several renderers may be added by supplying the option multiple times. See \fBRENDERERS\fP section of \fBeth-monitor (1)\fP for more details.	--renderer	module
 filter	Add code execution filter to all matched transactions. The argument must be a python module path. Several filters may be added by supplying the option multiple times. Filters will be executed in the order the options are given. See \fBDEFINING FILTERS\fP section of \fBeth-monitor (1)\fP for more details.	--filter	module
+context_key	Add a key-value pair that gets passed to the syncer context. May be specified several times.	--context-key	key=value

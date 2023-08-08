@@ -14,5 +14,3 @@ rules_data_args = [
 def to_config_names(v):
     v = v.upper()
     return ('ETHMONITOR_' + v, 'ETHMONITOR_X_' + v)
-
-

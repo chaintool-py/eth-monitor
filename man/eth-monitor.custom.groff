@@ -29,14 +29,19 @@ Rendering filters will be executed in order, and the first filter to return \fIF
 
 .SH DEFINING FILTERS
 
+Filters will strictly be executed in the order which they are defined on the command line.
+
 A python module used for filter must fulfill two conditions:
 
 .IP
 1. It must provide a class named \fIFilter\fP in the package base namespace.
 .IP
-2. The \fIFilter\fP class must include a method named \fIfilter\fP with the signature \fIdef filter(self, conn, block, tx, db_session=None)\fP. 
+2. The \fIFilter\fP class must extend the \fIchainsyncer.filter.SyncFilter\fP interface, and at least override the \fIfilter\fP method.
 
-Filters will strictly be executed in the order which they are defined on the command line.
+
+.SS SYNCER AND FILTER CONTEXT
+
+Key-value pairs specified with `--context-key` will be passed to the filter's \fIprepare\fP method, aswell as the \fIctx\fP parameter of the \fIfilter\fP method.
 
 
 .SH FURTHER READING
