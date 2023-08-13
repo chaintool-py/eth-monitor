@@ -1,3 +1,5 @@
+- 0.8.6
+	* Handle crash on conrtact creation when recipient filter is active
 - 0.8.5
 	* Instantiate constructor for chain interface superclass
 	* Remove unused settings transform method for sync interface

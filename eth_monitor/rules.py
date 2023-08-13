@@ -85,6 +85,8 @@ class RuleSimple:
             if rule != None and is_same_address(sender, rule):
                 logg.debug('tx {} rule {} match in SENDER {}'.format(tx_hash, self.description, sender))
                 return True
+        if recipient == None:
+            return False
         for rule in self.inputs:
             if rule != None and is_same_address(recipient, rule):
                 logg.debug('tx {} rule {} match in RECIPIENT {}'.format(tx_hash, self.description, recipient))
