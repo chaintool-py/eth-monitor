@@ -1,3 +1,5 @@
+- 0.8.7
+	* Upgrade chainsyncer (and shep) to avoid state deletion on partial filter list interrupts
 - 0.8.6
 	* Handle crash on conrtact creation when recipient filter is active
 - 0.8.5
