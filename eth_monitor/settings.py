@@ -274,7 +274,10 @@ def process_cache_store(settings, config):
 
 def process_cache_filter(settings, config):
     cache_store = settings.get('CACHE_STORE')
-    fltr = CacheFilter(cache_store, rules_filter=settings.o['RULES'], include_tx_data=config.true('ETHCACHE_STORE_TX'))
+    cache_rules = AddressRules(include_by_default=True)
+    if str(cache_store) != 'Nullstore':
+        cache_rules = settings.o['RULES'] 
+    fltr = CacheFilter(cache_store, rules_filter=cache_rules, include_tx_data=config.true('ETHCACHE_STORE_TX'))
     sync_store = settings.get('SYNC_STORE')
     sync_store.register(fltr)
     
