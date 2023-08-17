@@ -1,0 +1,2 @@
+class RuleFail(Exception):
+    pass

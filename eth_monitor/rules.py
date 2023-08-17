@@ -4,6 +4,7 @@ import uuid
 
 # external imports
 from chainlib.eth.address import is_same_address
+from .error import RuleFail
 
 logg = logging.getLogger()
 
@@ -11,14 +12,17 @@ logg = logging.getLogger()
 
 class RuleData:
 
-    def __init__(self, fragments, description=None):
+    def __init__(self, fragments, description=None, match_all=False):
         self.fragments = fragments
         self.description = description
         if self.description == None:
             self.description = str(uuid.uuid4())
+        self.match_all = match_all
 
 
     def check(self, sender, recipient, data, tx_hash):
+        have_fail = False
+        have_match = False
         if len(self.fragments) == 0:
             return False
 
@@ -28,9 +32,16 @@ class RuleData:
                 continue
             if fragment in data:
                 logg.debug('tx {} rule {} match in DATA FRAGMENT {}'.format(tx_hash, self.description, fragment))
-                return True
+                if not self.match_all:
+                    return True
+                have_match = True
+            else:
+                logg.debug('data match all {}'.format(self.match_all))
+                if self.match_all:
+                    return False
+                have_fail = True
         
-        return False
+        return have_match
 
 
     def __str__(self):
@@ -41,11 +52,13 @@ class RuleData:
 
 class RuleMethod:
 
-    def __init__(self, methods, description=None):
+    def __init__(self, methods, description=None, match_all=False):
         self.methods = methods
         self.description = description
         if self.description == None:
             self.description = str(uuid.uuid4())
+        if match_all:
+            logg.warning('match_all ignord for RuleMethod rule')
 
 
     def check(self, sender, recipient, data, tx_hash):
@@ -82,22 +95,51 @@ class RuleSimple:
 
     
     def check(self, sender, recipient, data, tx_hash):
+        r = None
+        try:
+            r = self.__check(sender, recipient, data, tx_hash)
+        except RuleFail:
+            return False
+        return r
+
+
+    def __check(self, sender, recipient, data, tx_hash):
         have_fail = False
         have_match = False
         for rule in self.outputs:
             if rule != None and is_same_address(sender, rule):
                 logg.debug('tx {} rule {} match in SENDER {}'.format(tx_hash, self.description, sender))
-                return True
+                if not self.match_all:
+                    return True
+                have_match = True
+            else:
+                if self.match_all:
+                    raise RuleFail(rule)
+                have_fail = True
         if recipient == None:
             return False
         for rule in self.inputs:
             if rule != None and is_same_address(recipient, rule):
                 logg.debug('tx {} rule {} match in RECIPIENT {}'.format(tx_hash, self.description, recipient))
-                return True
+                if not self.match_all:
+                    return True
+                have_match = True
+            else:
+                if self.match_all:
+                    raise RuleFail(rule)
+                have_fail = True
         for rule in self.executables:
             if rule != None and is_same_address(recipient, rule):
                 logg.debug('tx {} rule {} match in EXECUTABLE {}'.format(tx_hash, self.description, recipient))
-                return True
+                if not self.match_all:
+                    return True
+                have_match = True
+            else:
+                if self.match_all:
+                    raise RuleFail(rule)
+                have_fail = True
+
+        return have_match
 
 
     def __str__(self):
@@ -131,7 +173,6 @@ class AddressRules:
         return self.apply_rules_addresses(tx.outputs[0], tx.inputs[0], tx.payload, tx.hash)
 
 
-    # TODO: rename
     def apply_rules_addresses(self, sender, recipient, data, tx_hash):
         v = self.include_by_default
         have_fail = False

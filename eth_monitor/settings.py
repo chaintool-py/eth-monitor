@@ -130,6 +130,7 @@ def process_address_arg_rules(settings, config):
             category['input']['i'],
             category['exec']['i'],
             description='INCLUDE',
+            match_all=settings.get('MATCH_ALL'),
             )
     rules.include(includes)
 
@@ -167,7 +168,7 @@ def process_data_arg_rules(settings, config):
     for v in config.get('ETHMONITOR_X_DATA_IN'):
         exclude_data.append(v.lower())
 
-    includes = RuleData(include_data, description='INCLUDE')
+    includes = RuleData(include_data, description='INCLUDE', match_all=settings.get('MATCH_ALL'))
     rules.include(includes)
    
     excludes = RuleData(exclude_data, description='EXCLUDE')
@@ -211,7 +212,7 @@ def process_address_file_rules(settings, config): #rules, includes_file=None, ex
             except IndexError:
                 pass
 
-            rule = RuleSimple(sender, recipient, executable)
+            rule = RuleSimple(sender, recipient, executable, match_all=settings.get('MATCH_ALL'))
             rules.include(rule)
 
     excludes_file = config.get('ETHMONITOR_EXCLUDES_FILE')
@@ -243,6 +244,7 @@ def process_address_file_rules(settings, config): #rules, includes_file=None, ex
 
 def process_arg_rules(settings, config):
     address_rules = AddressRules(include_by_default=config.get('ETHMONITOR_INCLUDE_DEFAULT'))
+    settings.set('MATCH_ALL', config.true('ETHMONITOR_MATCH_ALL'))
     settings.set('RULES', address_rules)
     settings = process_address_arg_rules(settings, config)
     settings = process_data_arg_rules(settings, config)
