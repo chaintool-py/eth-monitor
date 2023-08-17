@@ -71,16 +71,19 @@ class RuleMethod:
 
 class RuleSimple:
 
-    def __init__(self, outputs, inputs, executables, description=None):
+    def __init__(self, outputs, inputs, executables, description=None, match_all=False):
         self.description = description
         if self.description == None:
             self.description = str(uuid.uuid4())
         self.outputs = outputs
         self.inputs = inputs
         self.executables = executables
+        self.match_all = match_all
 
-
+    
     def check(self, sender, recipient, data, tx_hash):
+        have_fail = False
+        have_match = False
         for rule in self.outputs:
             if rule != None and is_same_address(sender, rule):
                 logg.debug('tx {} rule {} match in SENDER {}'.format(tx_hash, self.description, sender))
@@ -107,10 +110,11 @@ class RuleSimple:
 
 class AddressRules:
 
-    def __init__(self, include_by_default=False):
+    def __init__(self, include_by_default=False, match_all=False):
         self.excludes = []
         self.includes = []
         self.include_by_default = include_by_default
+        self.match_all = match_all
 
 
     def exclude(self, rule):
@@ -130,17 +134,27 @@ class AddressRules:
     # TODO: rename
     def apply_rules_addresses(self, sender, recipient, data, tx_hash):
         v = self.include_by_default
+        have_fail = False
+        have_match = False
 
         for rule in self.includes:
             if rule.check(sender, recipient, data, tx_hash):
                 v = True
                 logg.info('match in includes rule: {}'.format(rule))
+                if not self.match_all:
+                    break
+            elif self.match_all:
+                v = False
                 break
+
+        if not v:
+            return v
 
         for rule in self.excludes:
             if rule.check(sender, recipient, data, tx_hash):
                 v = False
                 logg.info('match in excludes rule: {}'.format(rule))
-                break
-
+                if not self.match_all:
+                    break
+    
         return v
