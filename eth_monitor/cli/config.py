@@ -56,6 +56,7 @@ def process_config(config, arg, args, flags):
 
     config.add(getattr(args, 'session_id'), '_SESSION_ID', False)
     config.add(getattr(args, 'cache_dir'), '_CACHE_DIR', False)
+    config.add(getattr(args, 'run_dir'), '_RUN_DIR', False)
     config.add(getattr(args, 'fresh'), '_FRESH', False)
 
     return config

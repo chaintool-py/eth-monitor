@@ -47,6 +47,7 @@ from eth_monitor.callback import (
 import eth_monitor.cli
 from eth_monitor.cli.log import process_log
 from eth_monitor.settings import process_settings as process_settings_local
+from eth_monitor.run import cleanup
 
 logg = logging.getLogger()
 
@@ -110,6 +111,8 @@ def main():
         r = drv.run(settings.get('CONN'), ctx=settings.get('SYNCER_CONTEXT'))
     except SyncDone as e:
         sys.stderr.write("sync {} done at block {}\n".format(drv, e))
+
+    cleanup(settings)
 
 
 if __name__ == '__main__':

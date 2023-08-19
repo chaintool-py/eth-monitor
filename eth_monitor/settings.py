@@ -34,6 +34,7 @@ from eth_monitor.filters.cache import Filter as CacheFilter
 from eth_monitor.config import override, list_from_prefix
 from eth_monitor.filters.out import OutFilter
 from eth_monitor.filters.block import Filter as BlockFilter
+from eth_monitor.filters.run import Filter as RunFilter
 
 logg = logging.getLogger(__name__)
 
@@ -47,6 +48,32 @@ def process_monitor_session(settings, config):
             session_id = 'default'
     
     settings.set('SESSION_ID', session_id)
+    settings.set('SESSION_OK', True)
+    return settings
+
+
+def process_monitor_rundir(settings, config):
+    settings.set('RUN_OUT', False)
+    if config.get('_RUN_DIR') == None:
+        return settings
+
+    run_dir = config.get('_RUN_DIR')
+    try:
+        os.makedirs(run_dir, exist_ok=True)
+    except Exception as e:
+        logg.error('could not create run dir, deactivating run output: ' + str(e))
+        return settings
+ 
+    lockfile = os.path.join(run_dir, '.lock')
+    try:
+        f = open(lockfile, 'x')
+        f.close()
+    except FileExistsError:
+        logg.error('run dir {} is already in use, deactivating run output'.format(run_dir))
+        return settings
+  
+    settings.set('RUN_OUT', True)
+    settings.set('RUN_DIR', run_dir)
     return settings
 
 
@@ -288,6 +315,14 @@ def process_cache_filter(settings, config):
     return settings
 
 
+def process_run_filter(settings, config):
+    if not settings.get('RUN_OUT'):
+        return settings
+    fltr = RunFilter(settings.get('RUN_DIR'))
+    hndlr = settings.get('BLOCK_HANDLER')
+    hndlr.register(fltr)
+    return settings
+
 def process_tx_filter(settings, config):
     for fltr in list_from_prefix(config, 'filter'):
         m = importlib.import_module(fltr)
@@ -335,6 +370,7 @@ def process_filter(settings, config):
     settings = process_renderer(settings, config)
     settings = process_block_filter(settings, config)
     settings = process_cache_filter(settings, config)
+    settings = process_run_filter(settings, config)
     settings = process_tx_filter(settings, config)
     settings = process_out_filter(settings, config)
     settings = process_arg_filter(settings, config)
@@ -383,6 +419,7 @@ def process_user_context(settings, config):
             ctx_usr[k] = v
     ctx = {
         'driver': 'eth-monitor',
+        'rundir': settings.get('RUN_DIR'),
         'usr': ctx_usr,
             }
     settings.set('SYNCER_CONTEXT', ctx)
@@ -392,6 +429,7 @@ def process_user_context(settings, config):
 def process_settings(settings, config):
     settings = process_monitor_session(settings, config)
     settings = process_monitor_session_dir(settings, config)
+    settings = process_monitor_rundir(settings, config)
     settings = process_arg_rules(settings, config)
     settings = process_sync(settings, config)
     settings = process_cache(settings, config)

@@ -2,6 +2,7 @@
 	* Skip rules filter processing for cache when deactivated
 	* Add match-all flag to rule processing
 	* Add match-all flag to CLI to toggle setting match_all flag to rule processing for include criteria
+	* Implement state dir (rundir), and last synced block output
 - 0.8.7
 	* Upgrade chainsyncer (and shep) to avoid state deletion on partial filter list interrupts
 - 0.8.6

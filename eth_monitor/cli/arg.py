@@ -34,3 +34,4 @@ def process_args(argparser, args, flags):
 
     # misc flags
     argparser.add_argument('-k', '--context-key', dest='context_key', action='append', type=str, help='Add a key-value pair to be added to the context')
+    argparser.add_argument('--run-dir', type=str, dest='run_dir', help='Output key sync and processing state properties to given diretory')
